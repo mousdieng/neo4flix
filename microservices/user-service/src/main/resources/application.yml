@@ -1,0 +1,131 @@
+spring:
+  application:
+    name: user-service
+
+  neo4j:
+    uri: ${NEO4J_URI:bolt://localhost:7687}
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:password}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      group-id: user-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 9084
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGeneration2024}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days in milliseconds
+
+# Default Admin User Configuration
+admin:
+  username: ${ADMIN_USERNAME:admin}
+  email: ${ADMIN_EMAIL:admin@neo4flix.com}
+  password: ${ADMIN_PASSWORD:Admin@123456}
+  firstName: ${ADMIN_FIRSTNAME:System}
+  lastName: ${ADMIN_LASTNAME:Administrator}
+
+# MinIO Configuration
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket-name: ${MINIO_BUCKET_NAME:neo4flix-users}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    mail:
+      enabled: false
+
+logging:
+  level:
+    com.neo4flix.userservice: DEBUG
+    org.springframework.data.neo4j: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# OpenAPI Documentation
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+  info:
+    title: Neo4flix User Service API
+    description: User authentication and management microservice for Neo4flix
+    version: 1.0.0
+  servers:
+    - url: http://localhost:9080
+      description: Local server
+    - url: http://localhost:8080/user-service
+      description: Gateway server
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  neo4j:
+    uri: ${NEO4J_URI:bolt://neo4j:7687}
+
+minio:
+  url: ${MINIO_URL:http://minio:9000}
+
+server:
+  port: 9084
+
+logging:
+  level:
+    com.neo4flix.userservice: INFO
+    org.springframework.security: WARN
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  neo4j:
+    uri: bolt://localhost:7688
+
+logging:
+  level:
+    com.neo4flix.userservice: DEBUG

@@ -1,0 +1,182 @@
+<div class="bg-gray-900 rounded-lg p-6">
+  @if (readonly && existingRating) {
+    <!-- Read-only Review Display -->
+    <div class="space-y-4">
+      <!-- User Info and Rating -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          @if (existingRating.user) {
+            <div class="w-10 h-10 bg-netflix-red rounded-full flex items-center justify-center">
+              <span class="text-white font-semibold text-sm">
+                {{ existingRating.user.firstName.charAt(0) }}{{ existingRating.user.lastName.charAt(0) }}
+              </span>
+            </div>
+            <div>
+              <h4 class="text-white font-medium">
+                {{ existingRating.user.firstName }} {{ existingRating.user.lastName }}
+              </h4>
+              <p class="text-gray-400 text-sm">{{ formatDate(existingRating.ratedAt) }}</p>
+            </div>
+          }
+        </div>
+        <app-rating
+          [rating]="existingRating.rating"
+          [readonly]="true"
+          size="md"
+        ></app-rating>
+      </div>
+
+      <!-- Review Text -->
+      @if (existingRating.review) {
+        <div class="text-gray-300 leading-relaxed">
+          <p>{{ existingRating.review }}</p>
+        </div>
+      }
+    </div>
+  } @else if (canEdit) {
+    <!-- Editable Review Form -->
+    <div class="space-y-4">
+      @if (hasExistingRating && !isEditing()) {
+        <!-- Display existing review with edit controls -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-white">Your Review</h3>
+            <div class="flex space-x-2">
+              <button
+                type="button"
+                (click)="startEditing()"
+                class="px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                (click)="onDelete()"
+                [disabled]="isSubmitting()"
+                class="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <app-rating
+              [rating]="existingRating!.rating"
+              [readonly]="true"
+              size="md"
+            ></app-rating>
+            @if (existingRating!.review) {
+              <p class="text-gray-300">{{ existingRating!.review }}</p>
+            }
+            <p class="text-gray-500 text-sm">
+              Last updated: {{ formatDate(existingRating!.lastModified || existingRating!.ratedAt) }}
+            </p>
+          </div>
+        </div>
+      } @else {
+        <!-- Review form (new or editing) -->
+        <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-white">
+              {{ hasExistingRating ? 'Edit Your Review' : 'Write a Review' }}
+            </h3>
+            @if (isEditing()) {
+              <button
+                type="button"
+                (click)="cancelEditing()"
+                class="px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            }
+          </div>
+
+          <!-- Rating Input -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">
+              Your Rating *
+            </label>
+            <app-rating
+              [rating]="reviewForm.value.rating"
+              [readonly]="false"
+              size="lg"
+              (ratingChange)="onRatingChange($event)"
+            ></app-rating>
+            @if (reviewForm.get('rating')?.invalid && reviewForm.get('rating')?.touched) {
+              <p class="mt-1 text-sm text-red-500">Please select a rating</p>
+            }
+          </div>
+
+          <!-- Review Text -->
+          <div>
+            <label for="review" class="block text-sm font-medium text-gray-300 mb-2">
+              Your Review (Optional)
+            </label>
+            <textarea
+              id="review"
+              formControlName="review"
+              rows="4"
+              placeholder="Share your thoughts about this movie..."
+              class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-2 focus:border-netflix-red focus:ring-1 focus:ring-netflix-red resize-none"
+              [class.border-red-500]="reviewForm.get('review')?.invalid && reviewForm.get('review')?.touched"
+            ></textarea>
+
+            <!-- Character count -->
+            <div class="flex justify-between items-center mt-2">
+              @if (reviewForm.get('review')?.invalid && reviewForm.get('review')?.touched) {
+                <p class="text-sm text-red-500">Review is too long</p>
+              } @else {
+                <div></div>
+              }
+              <span class="text-sm" [class]="isCharacterLimitNear() ? 'text-yellow-500' : 'text-gray-500'">
+                {{ getCharacterCount() }}/1000
+              </span>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          @if (error()) {
+            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+              <div class="flex">
+                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div class="ml-3">
+                  <p class="text-sm text-red-700">{{ error() }}</p>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Submit Button -->
+          <div class="flex justify-end space-x-3">
+            <button
+              type="submit"
+              [disabled]="reviewForm.invalid || isSubmitting()"
+              class="px-6 py-2 bg-netflix-red text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              @if (isSubmitting()) {
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ hasExistingRating ? 'Updating...' : 'Submitting...' }}
+              } @else {
+                {{ hasExistingRating ? 'Update Review' : 'Submit Review' }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  } @else {
+    <!-- Not authenticated or readonly without existing rating -->
+    <div class="text-center py-8">
+      <p class="text-gray-400 mb-4">Sign in to write a review for this movie</p>
+      <a href="/login" class="btn btn-netflix">
+        Sign In
+      </a>
+    </div>
+  }
+</div>

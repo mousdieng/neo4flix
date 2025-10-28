@@ -1,0 +1,13 @@
+/* Error Page Styles */
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary::marker {
+  display: none;
+}
+
+details[open] summary {
+  margin-bottom: 1rem;
+}

@@ -1,0 +1,91 @@
+<div class="share-movie-dialog">
+  <h2 mat-dialog-title>Share "{{ data.movieTitle }}" with Friends</h2>
+
+  <mat-dialog-content class="dialog-content">
+    <!-- Loading State -->
+    <div *ngIf="loading()" class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading friends...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error()" class="error-message">
+      <p>{{ error() }}</p>
+      <button mat-button (click)="loadFriends()">Retry</button>
+    </div>
+
+    <!-- Friends List -->
+    <div *ngIf="!loading() && !error()" class="friends-container">
+      <!-- No Friends Message -->
+      <div *ngIf="friends().length === 0" class="no-friends">
+        <p>You don't have any friends yet.</p>
+        <p>Add some friends to share recommendations!</p>
+      </div>
+
+      <!-- Friends Selection -->
+      <div *ngIf="friends().length > 0" class="friends-list">
+        <div class="selection-actions">
+          <button mat-button (click)="selectAll()">Select All</button>
+          <button mat-button (click)="deselectAll()">Deselect All</button>
+          <span class="selected-count">{{ selectedFriends().size }} selected</span>
+        </div>
+
+        <div class="friend-items">
+          <div
+            *ngFor="let friend of friends()"
+            class="friend-item"
+            [class.selected]="isFriendSelected(friend.id)"
+            (click)="toggleFriend(friend.id)"
+          >
+            <mat-checkbox
+              [checked]="isFriendSelected(friend.id)"
+              (click)="$event.stopPropagation()"
+              (change)="toggleFriend(friend.id)"
+            ></mat-checkbox>
+
+            <div class="friend-avatar">
+              <img
+                *ngIf="friend.profilePictureUrl"
+                [src]="friend.profilePictureUrl"
+                [alt]="friend.fullName"
+              />
+              <div *ngIf="!friend.profilePictureUrl" class="avatar-placeholder">
+                {{ friend.firstName.charAt(0) }}{{ friend.lastName.charAt(0) }}
+              </div>
+            </div>
+
+            <div class="friend-info">
+              <div class="friend-name">{{ friend.fullName }}</div>
+              <div class="friend-username">@{{ friend.username }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optional Message -->
+        <mat-form-field class="message-field" appearance="outline">
+          <mat-label>Add a message (optional)</mat-label>
+          <textarea
+            matInput
+            [(ngModel)]="message"
+            placeholder="Why do you recommend this movie?"
+            rows="3"
+            maxlength="500"
+          ></textarea>
+          <mat-hint align="end">{{ message().length }}/500</mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onShare()"
+      [disabled]="!canShare || loading()"
+    >
+      Share with {{ selectedFriends().size }} friend{{ selectedFriends().size !== 1 ? 's' : '' }}
+    </button>
+  </mat-dialog-actions>
+</div>

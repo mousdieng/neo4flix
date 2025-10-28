@@ -1,0 +1,13 @@
+/* Additional rating component styles */
+.rating-interactive {
+  transition: transform 0.2s ease;
+}
+
+.rating-interactive:hover {
+  transform: scale(1.05);
+}
+
+/* Custom clip path for half stars */
+.half-star {
+  clip-path: inset(0 50% 0 0);
+}

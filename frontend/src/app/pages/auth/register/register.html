@@ -1,0 +1,363 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <!-- Logo and Header -->
+    <div class="text-center">
+      <h1 class="text-4xl font-bold text-netflix-red mb-2">Neo4flix</h1>
+      <h2 class="text-2xl font-bold text-white">Join Neo4flix</h2>
+      <p class="mt-2 text-sm text-gray-300">
+        Or
+        <a routerLink="/login" class="font-medium text-netflix-red hover:text-red-400 transition-colors">
+          sign in to your account
+        </a>
+      </p>
+    </div>
+
+    <!-- Registration Form -->
+    <div class="bg-white rounded-lg shadow-2xl p-8">
+      <form class="space-y-6" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <!-- Success Message -->
+        @if (success()) {
+          <div class="bg-green-50 border border-green-200 rounded-md p-4">
+            <div class="flex">
+              <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              <div class="ml-3">
+                <p class="text-sm text-green-700">{{ success() }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Error Message -->
+        @if (error()) {
+          <div class="bg-red-50 border border-red-200 rounded-md p-4">
+            <div class="flex">
+              <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+              <div class="ml-3">
+                <p class="text-sm text-red-700">{{ error() }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Form Validation Error -->
+        @if (getFormError()) {
+          <div class="bg-red-50 border border-red-200 rounded-md p-4">
+            <div class="flex">
+              <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+              <div class="ml-3">
+                <p class="text-sm text-red-700">{{ getFormError() }}</p>
+              </div>
+            </div>
+          </div>
+        }
+
+        <div class="space-y-4">
+          <!-- Username Field -->
+          <div>
+            <label for="username" class="block text-sm font-medium text-gray-700 mb-2">
+              Username *
+            </label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              formControlName="username"
+              autocomplete="username"
+              class="input-field"
+              [class.border-red-500]="getFieldError('username')"
+              placeholder="Enter your username"
+            />
+            @if (getFieldError('username')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('username') }}</p>
+            }
+          </div>
+
+          <!-- Email Field -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+              Email Address *
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="input-field"
+              [class.border-red-500]="getFieldError('email')"
+              placeholder="Enter your email address"
+            />
+            @if (getFieldError('email')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('email') }}</p>
+            }
+          </div>
+
+          <!-- Name Fields Row -->
+          <div class="grid grid-cols-2 gap-4">
+            <!-- First Name Field -->
+            <div>
+              <label for="firstName" class="block text-sm font-medium text-gray-700 mb-2">
+                First Name *
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                formControlName="firstName"
+                autocomplete="given-name"
+                class="input-field"
+                [class.border-red-500]="getFieldError('firstName')"
+                placeholder="First name"
+              />
+              @if (getFieldError('firstName')) {
+                <p class="mt-1 text-sm text-red-600">{{ getFieldError('firstName') }}</p>
+              }
+            </div>
+
+            <!-- Last Name Field -->
+            <div>
+              <label for="lastName" class="block text-sm font-medium text-gray-700 mb-2">
+                Last Name *
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                formControlName="lastName"
+                autocomplete="family-name"
+                class="input-field"
+                [class.border-red-500]="getFieldError('lastName')"
+                placeholder="Last name"
+              />
+              @if (getFieldError('lastName')) {
+                <p class="mt-1 text-sm text-red-600">{{ getFieldError('lastName') }}</p>
+              }
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+              Password *
+            </label>
+            <div class="relative">
+              <input
+                id="password"
+                name="password"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+                class="input-field pr-10"
+                [class.border-red-500]="getFieldError('password')"
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                (click)="togglePasswordVisibility()"
+              >
+                @if (showPassword) {
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
+                  </svg>
+                } @else {
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                }
+              </button>
+            </div>
+
+            <!-- Password Strength Indicator -->
+            @if (registerForm.get('password')?.value) {
+              <div class="mt-2">
+                <div class="flex items-center space-x-2">
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div
+                      class="h-2 rounded-full transition-all duration-300"
+                      [ngClass]="{
+                        'bg-red-500': getPasswordStrength().level === 'Very Weak',
+                        'bg-red-400': getPasswordStrength().level === 'Weak',
+                        'bg-yellow-500': getPasswordStrength().level === 'Fair',
+                        'bg-blue-500': getPasswordStrength().level === 'Good',
+                        'bg-green-500': getPasswordStrength().level === 'Strong'
+                      }"
+                      [style.width.%]="getPasswordStrength().percentage"
+                    ></div>
+                  </div>
+                  <span class="text-xs" [class]="getPasswordStrength().color">
+                    {{ getPasswordStrength().level }}
+                  </span>
+                </div>
+              </div>
+            }
+
+            @if (getFieldError('password')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('password') }}</p>
+            }
+          </div>
+
+          <!-- Confirm Password Field -->
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password *
+            </label>
+            <div class="relative">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+                class="input-field pr-10"
+                [class.border-red-500]="getFieldError('confirmPassword') || getFormError()"
+                placeholder="Confirm your password"
+              />
+              <button
+                type="button"
+                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                (click)="toggleConfirmPasswordVisibility()"
+              >
+                @if (showConfirmPassword) {
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"/>
+                  </svg>
+                } @else {
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (getFieldError('confirmPassword')) {
+              <p class="mt-1 text-sm text-red-600">{{ getFieldError('confirmPassword') }}</p>
+            }
+          </div>
+
+          <!-- Terms and Conditions -->
+          <div class="flex items-start">
+            <div class="flex items-center h-5">
+              <input
+                id="agreeToTerms"
+                name="agreeToTerms"
+                type="checkbox"
+                formControlName="agreeToTerms"
+                class="h-4 w-4 text-netflix-red focus:ring-netflix-red border-gray-300 rounded"
+              />
+            </div>
+            <div class="ml-3 text-sm">
+              <label for="agreeToTerms" class="text-gray-700">
+                I agree to the
+                <a href="#" class="text-netflix-red hover:text-red-400">Terms and Conditions</a>
+                and
+                <a href="#" class="text-netflix-red hover:text-red-400">Privacy Policy</a> *
+              </label>
+              @if (getFieldError('agreeToTerms')) {
+                <p class="mt-1 text-sm text-red-600">{{ getFieldError('agreeToTerms') }}</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Picture Upload (Optional) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Profile Picture (Optional)
+          </label>
+          <div class="flex items-center space-x-4">
+            @if (profilePicturePreview()) {
+              <div class="relative">
+                <img
+                  [src]="profilePicturePreview()"
+                  alt="Profile preview"
+                  class="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+                />
+                <button
+                  type="button"
+                  (click)="removeProfilePicture()"
+                  class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+            } @else {
+              <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-2xl text-gray-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            }
+            <label class="flex-1 cursor-pointer">
+              <span class="block px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 text-center transition-colors">
+                Choose Photo
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                (change)="onProfilePictureSelected($event)"
+                class="hidden"
+              />
+            </label>
+          </div>
+          <p class="mt-1 text-xs text-gray-500">Max 5MB. JPG, PNG, GIF supported</p>
+        </div>
+
+        <!-- Submit Button -->
+        <div>
+          <button
+            type="submit"
+            [disabled]="isLoading()"
+            class="w-full btn btn-netflix text-lg py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            @if (isLoading()) {
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Creating Account...
+            } @else {
+              Create Account
+            }
+          </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">Already have an account?</span>
+          </div>
+        </div>
+
+        <!-- Sign In Link -->
+        <div class="text-center">
+          <a routerLink="/login" class="btn btn-secondary w-full">
+            Sign In
+          </a>
+        </div>
+      </form>
+
+      <!-- Password Requirements -->
+      <div class="mt-6 text-xs text-gray-500 space-y-1">
+        <p class="font-medium">Password requirements:</p>
+        <ul class="list-disc list-inside space-y-1 ml-4">
+          <li>At least 8 characters</li>
+          <li>One uppercase letter (A-Z)</li>
+          <li>One lowercase letter (a-z)</li>
+          <li>One number (0-9)</li>
+          <li>One special character (!@#$%^&*)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

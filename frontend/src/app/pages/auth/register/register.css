@@ -1,0 +1,48 @@
+/* Registration component specific styles */
+/* Rely on global styles from styles.css and Tailwind config */
+
+/* Ensure input text is always visible */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  color: #111827 !important; /* gray-900 */
+  background-color: #ffffff !important; /* white */
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* Password strength indicator custom animations */
+.password-strength-bar {
+  transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+}
+
+/* Form field focus enhancements */
+.input-field:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Error state styling */
+.input-field.border-red-500:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Loading button animation */
+.btn[disabled] {
+  cursor: not-allowed;
+}
+
+/* Smooth transitions for interactive elements */
+input, button {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}

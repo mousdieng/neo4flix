@@ -1,0 +1,72 @@
+<div class="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+  <div class="max-w-2xl w-full text-center">
+    <!-- 404 Animation -->
+    <div class="mb-8">
+      <h1 class="text-9xl font-bold text-red-600 mb-4 animate-pulse">404</h1>
+      <div class="text-6xl mb-8">🎬</div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="mb-8">
+      <h2 class="text-4xl font-bold text-white mb-4">Page Not Found</h2>
+      <p class="text-xl text-gray-400 mb-2">
+        Oops! The page you're looking for seems to have gone missing.
+      </p>
+      <p class="text-lg text-gray-500">
+        Like a deleted scene, this page doesn't exist in our final cut.
+      </p>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="bg-gray-800 rounded-lg p-6 mb-8">
+      <h3 class="text-lg font-semibold text-white mb-4">Here's what you can do:</h3>
+      <ul class="text-left text-gray-300 space-y-2">
+        <li class="flex items-start">
+          <svg class="w-5 h-5 text-red-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <span>Check the URL for typos</span>
+        </li>
+        <li class="flex items-start">
+          <svg class="w-5 h-5 text-red-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <span>Go back to the previous page</span>
+        </li>
+        <li class="flex items-start">
+          <svg class="w-5 h-5 text-red-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <span>Start fresh from the homepage</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button
+        (click)="goBack()"
+        class="px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center"
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Go Back
+      </button>
+      <button
+        (click)="goHome()"
+        class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center"
+      >
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Go to Homepage
+      </button>
+    </div>
+
+    <!-- Fun Quote -->
+    <div class="mt-12 text-gray-500 italic">
+      "I'm sorry, Dave. I'm afraid I can't find that page." - HAL 9000
+    </div>
+  </div>
+</div>

@@ -1,0 +1,561 @@
+<div class="min-h-screen bg-gray-900 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+      <p class="text-gray-400">Welcome back, {{ currentUser()?.username }}!</p>
+    </div>
+
+    <!-- Admin Badge -->
+    <div class="bg-yellow-400/10 border border-yellow-400/30 rounded-lg p-4 mb-8">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 text-yellow-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+          <h3 class="text-yellow-400 font-semibold">Administrator Access</h3>
+          <p class="text-gray-400 text-sm">You have full system access and privileges</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="bg-gray-800 rounded-lg border border-gray-700 mb-6">
+      <nav class="flex space-x-4 p-4">
+        <button
+          (click)="switchTab('dashboard')"
+          [class]="activeTab() === 'dashboard' ? 'bg-yellow-400 text-gray-900' : 'text-gray-300 hover:bg-gray-700'"
+          class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+          Dashboard
+        </button>
+        <button
+          (click)="switchTab('users')"
+          [class]="activeTab() === 'users' ? 'bg-yellow-400 text-gray-900' : 'text-gray-300 hover:bg-gray-700'"
+          class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+          User Management
+        </button>
+        <button
+          (click)="switchTab('movies')"
+          [class]="activeTab() === 'movies' ? 'bg-yellow-400 text-gray-900' : 'text-gray-300 hover:bg-gray-700'"
+          class="px-4 py-2 rounded-md text-sm font-medium transition-colors">
+          Movie Management
+        </button>
+      </nav>
+    </div>
+
+    <!-- Dashboard Tab -->
+    @if (activeTab() === 'dashboard') {
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm font-medium">Total Movies</h3>
+            <svg class="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+            </svg>
+          </div>
+          <p class="text-3xl font-bold text-white">{{ stats().totalMovies.toLocaleString() }}</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm font-medium">Total Genres</h3>
+            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+          </div>
+          <p class="text-3xl font-bold text-white">{{ stats().totalGenres }}</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm font-medium">Average Rating</h3>
+            <svg class="w-8 h-8 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+          </div>
+          <p class="text-3xl font-bold text-white">{{ stats().averageRating.toFixed(1) || '0.0' }}</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-gray-400 text-sm font-medium">System Status</h3>
+            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <p class="text-3xl font-bold text-green-500">Online</p>
+        </div>
+      </div>
+
+      <!-- Quick Info -->
+      <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+        <div class="flex items-start">
+          <svg class="w-5 h-5 text-blue-400 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+          <div class="flex-1">
+            <h3 class="text-blue-400 font-semibold mb-1">Admin Dashboard</h3>
+            <p class="text-gray-400 text-sm">Use the tabs above to manage users and movies. Click on "User Management" to view and manage all users, or "Movie Management" to add, edit, or delete movies.</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Users Tab -->
+    @if (activeTab() === 'users') {
+      <div class="bg-gray-800 rounded-lg border border-gray-700">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-700">
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">User Management</h2>
+            <div class="flex items-center space-x-3">
+              <input
+                type="text"
+                placeholder="Search users..."
+                [(ngModel)]="userSearchQuery"
+                (keyup.enter)="searchUsers()"
+                class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400">
+              <button
+                (click)="searchUsers()"
+                class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors">
+                Search
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        @if (loading()) {
+          <div class="p-12 text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
+            <p class="text-gray-400 mt-4">Loading users...</p>
+          </div>
+        }
+
+        <!-- User Table -->
+        @if (!loading() && users().length > 0) {
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-700">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-700">
+                @for (user of users(); track user.id) {
+                  <tr class="hover:bg-gray-700">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center mr-3">
+                          <span class="text-white font-semibold">{{ user.username.charAt(0).toUpperCase() }}</span>
+                        </div>
+                        <div>
+                          <p class="text-white font-medium">{{ user.username }}</p>
+                          <p class="text-gray-400 text-sm">{{ user.fullName || user.firstName + ' ' + user.lastName }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <p class="text-gray-300">{{ user.email }}</p>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span [class]="user.role === 'ADMIN' ? 'bg-yellow-400/20 text-yellow-400' : 'bg-gray-600 text-gray-300'"
+                            class="px-2 py-1 rounded text-xs font-medium">
+                        {{ user.role }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span [class]="user.enabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'"
+                            class="px-2 py-1 rounded text-xs font-medium">
+                        {{ user.enabled ? 'Active' : 'Disabled' }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-300 text-sm">
+                      {{ user.createdAt | date:'short' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          (click)="toggleUserStatus(user)"
+                          [class]="user.enabled ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'"
+                          class="px-3 py-1 rounded text-white text-xs font-medium transition-colors"
+                          title="{{ user.enabled ? 'Disable user' : 'Enable user' }}">
+                          {{ user.enabled ? 'Disable' : 'Enable' }}
+                        </button>
+                        @if (user.role !== 'ADMIN') {
+                          <button
+                            (click)="deleteUser(user.id, user.username)"
+                            class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-white text-xs font-medium transition-colors"
+                            title="Delete user">
+                            Delete
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="px-6 py-4 border-t border-gray-700 flex justify-between items-center">
+            <p class="text-gray-400 text-sm">
+              Page {{ usersPage() + 1 }} of {{ usersTotalPages() }}
+            </p>
+            <div class="flex space-x-2">
+              <button
+                (click)="previousPage('users')"
+                [disabled]="usersPage() === 0"
+                [class.opacity-50]="usersPage() === 0"
+                [class.cursor-not-allowed]="usersPage() === 0"
+                class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:hover:bg-gray-700">
+                Previous
+              </button>
+              <button
+                (click)="nextPage('users')"
+                [disabled]="usersPage() >= usersTotalPages() - 1"
+                [class.opacity-50]="usersPage() >= usersTotalPages() - 1"
+                [class.cursor-not-allowed]="usersPage() >= usersTotalPages() - 1"
+                class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:hover:bg-gray-700">
+                Next
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Empty State -->
+        @if (!loading() && users().length === 0) {
+          <div class="p-12 text-center">
+            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <p class="text-gray-400">No users found</p>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Movies Tab -->
+    @if (activeTab() === 'movies') {
+      <div class="bg-gray-800 rounded-lg border border-gray-700">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-700">
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">Movie Management</h2>
+            <div class="flex items-center space-x-3">
+              <input
+                type="text"
+                placeholder="Search movies..."
+                [(ngModel)]="movieSearchQuery"
+                (keyup.enter)="searchMovies()"
+                class="bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400">
+              <button
+                (click)="searchMovies()"
+                class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                Search
+              </button>
+              <button
+                (click)="openMovieForm()"
+                class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors">
+                Add Movie
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        @if (loading()) {
+          <div class="p-12 text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-400"></div>
+            <p class="text-gray-400 mt-4">Loading movies...</p>
+          </div>
+        }
+
+        <!-- Movie Table -->
+        @if (!loading() && movies().length > 0) {
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gray-700">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Movie</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Year</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Rating</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Ratings</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-700">
+                @for (movie of movies(); track movie.id) {
+                  <tr class="hover:bg-gray-700">
+                    <td class="px-6 py-4">
+                      <div class="flex items-center">
+                        @if (movie.posterUrl) {
+                          <img [src]="movie.posterUrl" [alt]="movie.title" class="w-12 h-18 object-cover rounded mr-3">
+                        } @else {
+                          <div class="w-12 h-18 bg-gray-600 rounded mr-3 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+                            </svg>
+                          </div>
+                        }
+                        <div>
+                          <p class="text-white font-medium">{{ movie.title }}</p>
+                          <p class="text-gray-400 text-sm line-clamp-1">{{ movie.plot }}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-300">
+                      {{ movie.releaseYear }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <svg class="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        <span class="text-white font-medium">{{ movie.averageRating?.toFixed(1) || 'N/A' }}</span>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-300">
+                      {{ movie.totalRatings || 0 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <div class="flex space-x-2">
+                        <button
+                          (click)="openMovieForm(movie)"
+                          class="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-white text-xs font-medium transition-colors">
+                          Edit
+                        </button>
+                        <button
+                          (click)="deleteMovie(movie.id, movie.title)"
+                          class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-white text-xs font-medium transition-colors">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="px-6 py-4 border-t border-gray-700 flex justify-between items-center">
+            <p class="text-gray-400 text-sm">
+              Page {{ moviesPage() + 1 }} of {{ moviesTotalPages() }}
+            </p>
+            <div class="flex space-x-2">
+              <button
+                (click)="previousPage('movies')"
+                [disabled]="moviesPage() === 0"
+                [class.opacity-50]="moviesPage() === 0"
+                [class.cursor-not-allowed]="moviesPage() === 0"
+                class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:hover:bg-gray-700">
+                Previous
+              </button>
+              <button
+                (click)="nextPage('movies')"
+                [disabled]="moviesPage() >= moviesTotalPages() - 1"
+                [class.opacity-50]="moviesPage() >= moviesTotalPages() - 1"
+                [class.cursor-not-allowed]="moviesPage() >= moviesTotalPages() - 1"
+                class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:hover:bg-gray-700">
+                Next
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Empty State -->
+        @if (!loading() && movies().length === 0) {
+          <div class="p-12 text-center">
+            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+            </svg>
+            <p class="text-gray-400">No movies found</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Movie Form Modal -->
+@if (showMovieForm()) {
+  <div class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div class="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-white">
+          {{ editingMovie() ? 'Edit Movie' : 'Add New Movie' }}
+        </h3>
+        <button (click)="closeMovieForm()" class="text-gray-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+          <input
+            type="text"
+            [(ngModel)]="movieForm().title"
+            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+            placeholder="Movie title"
+            required>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Plot/Synopsis *</label>
+          <textarea
+            [(ngModel)]="movieForm().plot"
+            rows="4"
+            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+            placeholder="Movie plot and synopsis"
+            required></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Release Year *</label>
+            <input
+              type="number"
+              [(ngModel)]="movieForm().releaseYear"
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+              placeholder="2024"
+              required>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Duration (minutes)</label>
+            <input
+              type="number"
+              [(ngModel)]="movieForm().duration"
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+              placeholder="120">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Poster URL</label>
+          <input
+            type="url"
+            [(ngModel)]="movieForm().posterUrl"
+            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+            placeholder="https://example.com/poster.jpg or IMDB URL">
+          <p class="text-xs text-gray-500 mt-1">Use IMDB poster URL or leave empty to upload file below</p>
+          @if (movieForm().posterUrl && !posterPreviewUrl()) {
+            <div class="mt-2">
+              <img [src]="movieForm().posterUrl" alt="Poster preview" class="w-32 h-48 object-cover rounded border border-gray-600">
+            </div>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Trailer URL</label>
+          <input
+            type="url"
+            [(ngModel)]="movieForm().trailerUrl"
+            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+            placeholder="https://youtube.com/watch?v=...">
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="bg-gray-700/50 border border-gray-600 rounded-lg p-4 space-y-3">
+          <h4 class="text-sm font-medium text-yellow-400">Upload Files</h4>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Upload Poster Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                (change)="onPosterFileSelected($event)"
+                class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-400 file:text-gray-900 hover:file:bg-yellow-500 file:cursor-pointer">
+              @if (selectedPosterFile) {
+                <p class="text-xs text-green-400 mt-1">Selected: {{ selectedPosterFile.name }}</p>
+              }
+              @if (uploadingPoster()) {
+                <p class="text-xs text-yellow-400 mt-1">Uploading poster...</p>
+              }
+              @if (posterPreviewUrl()) {
+                <div class="mt-2">
+                  <img [src]="posterPreviewUrl()" alt="Poster preview" class="w-32 h-48 object-cover rounded border border-gray-600">
+                </div>
+              }
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Upload Trailer Video</label>
+              <input
+                type="file"
+                accept="video/*"
+                (change)="onTrailerFileSelected($event)"
+                class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-yellow-400 file:text-gray-900 hover:file:bg-yellow-500 file:cursor-pointer">
+              @if (selectedTrailerFile) {
+                <p class="text-xs text-green-400 mt-1">Selected: {{ selectedTrailerFile.name }}</p>
+              }
+              @if (uploadingTrailer()) {
+                <p class="text-xs text-yellow-400 mt-1">Uploading trailer...</p>
+              }
+              @if (trailerPreviewUrl()) {
+                <div class="mt-2">
+                  <video [src]="trailerPreviewUrl()" controls class="w-full h-32 rounded border border-gray-600">
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              }
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-400">
+            <strong class="text-yellow-400">Optional:</strong> Upload files to replace URLs above. Uploaded files will overwrite the poster/trailer URLs.
+            <br>Poster max 5MB, Trailer max 50MB.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Language</label>
+            <input
+              type="text"
+              [(ngModel)]="movieForm().language"
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+              placeholder="English">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Country</label>
+            <input
+              type="text"
+              [(ngModel)]="movieForm().country"
+              class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+              placeholder="USA">
+          </div>
+        </div>
+
+        <!-- IMDb Rating and Metacritic Score removed - these are not part of the data model -->
+        <!-- The system uses averageRating which is calculated from user ratings -->
+      </div>
+
+      <div class="px-6 py-4 border-t border-gray-700 flex justify-end space-x-3">
+        <button
+          (click)="closeMovieForm()"
+          class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+          Cancel
+        </button>
+        <button
+          (click)="saveMovie()"
+          class="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-6 py-2 rounded-lg font-medium transition-colors">
+          {{ editingMovie() ? 'Update' : 'Create' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

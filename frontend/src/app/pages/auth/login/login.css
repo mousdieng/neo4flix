@@ -1,0 +1,30 @@
+/* Login component specific styles */
+
+/* Ensure input text is always visible */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  color: #111827 !important; /* gray-900 */
+  background-color: #ffffff !important; /* white */
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder {
+  color: #6b7280 !important; /* gray-500 */
+}
+
+/* Form field focus enhancements */
+.input-field:focus {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Error state styling */
+.input-field.border-red-500:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Smooth transitions for interactive elements */
+input, button {
+  transition: all 0.2s ease-in-out;
+}

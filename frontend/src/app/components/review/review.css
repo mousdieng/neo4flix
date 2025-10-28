@@ -1,0 +1,22 @@
+/* Review component specific styles */
+.review-container {
+  transition: all 0.3s ease;
+}
+
+.review-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.review-text {
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.character-count-warning {
+  color: #f59e0b;
+}
+
+.character-count-error {
+  color: #ef4444;
+}

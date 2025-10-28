@@ -1,0 +1,310 @@
+<div class="min-h-screen bg-gray-900 text-white">
+  <!-- Header -->
+  <div class="bg-gray-800 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h1 class="text-4xl font-bold mb-2">Friends</h1>
+      <p class="text-gray-400">Manage your connections and find new friends</p>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-8 border-b border-gray-700">
+      <button
+        (click)="switchTab('friends')"
+        [class]="activeTab() === 'friends'
+          ? 'border-b-2 border-red-600 text-white'
+          : 'text-gray-400 hover:text-white'"
+        class="px-6 py-3 font-semibold transition-colors"
+      >
+        My Friends ({{ friends().length }})
+      </button>
+      <button
+        (click)="switchTab('requests')"
+        [class]="activeTab() === 'requests'
+          ? 'border-b-2 border-red-600 text-white'
+          : 'text-gray-400 hover:text-white'"
+        class="px-6 py-3 font-semibold transition-colors relative"
+      >
+        Requests
+        @if (pendingRequests().length > 0) {
+          <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            {{ pendingRequests().length }}
+          </span>
+        }
+      </button>
+      <button
+        (click)="switchTab('search')"
+        [class]="activeTab() === 'search'
+          ? 'border-b-2 border-red-600 text-white'
+          : 'text-gray-400 hover:text-white'"
+        class="px-6 py-3 font-semibold transition-colors"
+      >
+        Find Friends
+      </button>
+    </div>
+
+    <!-- Friends List Tab -->
+    @if (activeTab() === 'friends') {
+      @if (isLoading()) {
+        <div class="flex items-center justify-center py-20">
+          <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600"></div>
+        </div>
+      } @else if (friends().length === 0) {
+        <div class="text-center py-20">
+          <svg class="w-24 h-24 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <h3 class="text-xl font-medium text-gray-300 mb-2">No friends yet</h3>
+          <p class="text-gray-500 mb-6">Start connecting with other movie enthusiasts!</p>
+          <button
+            (click)="switchTab('search')"
+            class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            Find Friends
+          </button>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          @for (friend of friends(); track friend.id) {
+            <div class="bg-gray-800 rounded-lg p-6 hover:bg-gray-750 transition-colors">
+              <div class="flex items-center gap-4 mb-4">
+                <!-- Avatar -->
+                @if (friend.profilePictureUrl) {
+                  <img
+                    [src]="friend.profilePictureUrl"
+                    [alt]="friend.fullName"
+                    class="w-16 h-16 rounded-full object-cover"
+                  />
+                } @else {
+                  <div class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center text-xl font-bold">
+                    {{ getUserInitials(friend) }}
+                  </div>
+                }
+
+                <!-- Info -->
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold">{{ friend.fullName }}</h3>
+                  <p class="text-sm text-gray-400">@{{ friend.username }}</p>
+                </div>
+              </div>
+
+              <!-- Stats -->
+              <div class="flex items-center gap-4 mb-4 text-sm text-gray-400">
+                <span class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                  </svg>
+                  {{ friend.friendCount }} friends
+                </span>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex gap-2">
+                <button
+                  (click)="navigateToProfile(friend.id)"
+                  class="flex-1 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                >
+                  View Profile
+                </button>
+                <button
+                  (click)="removeFriend(friend.id)"
+                  class="bg-gray-700 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- Requests Tab -->
+    @if (activeTab() === 'requests') {
+      <div class="space-y-8">
+        <!-- Pending Requests (Incoming) -->
+        <div>
+          <h2 class="text-2xl font-semibold mb-4">Pending Requests</h2>
+          @if (pendingRequests().length === 0) {
+            <div class="text-center py-12 bg-gray-800 rounded-lg">
+              <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+              </svg>
+              <p class="text-gray-400">No pending friend requests</p>
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (request of pendingRequests(); track request.id) {
+                <div class="bg-gray-800 rounded-lg p-4 flex items-center gap-4">
+                  <!-- Avatar -->
+                  @if (request.sender.profilePictureUrl) {
+                    <img
+                      [src]="request.sender.profilePictureUrl"
+                      [alt]="request.sender.firstName + ' ' + request.sender.lastName"
+                      class="w-14 h-14 rounded-full object-cover"
+                    />
+                  } @else {
+                    <div class="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-lg font-bold">
+                      {{ getUserInitials(request.sender) }}
+                    </div>
+                  }
+
+                  <!-- Info -->
+                  <div class="flex-1">
+                    <h3 class="font-semibold">{{ request.sender.firstName }} {{ request.sender.lastName }}</h3>
+                    <p class="text-sm text-gray-400">@{{ request.sender.username }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ request.createdAt | date:'medium' }}</p>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex gap-2">
+                    <button
+                      (click)="acceptRequest(request.id)"
+                      class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      (click)="rejectRequest(request.id)"
+                      class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Sent Requests (Outgoing) -->
+        <div>
+          <h2 class="text-2xl font-semibold mb-4">Sent Requests</h2>
+          @if (sentRequests().length === 0) {
+            <div class="text-center py-12 bg-gray-800 rounded-lg">
+              <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+              </svg>
+              <p class="text-gray-400">No sent friend requests</p>
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (request of sentRequests(); track request.id) {
+                <div class="bg-gray-800 rounded-lg p-4 flex items-center gap-4">
+                  <!-- Avatar -->
+                  @if (request.receiver.profilePictureUrl) {
+                    <img
+                      [src]="request.receiver.profilePictureUrl"
+                      [alt]="request.receiver.firstName + ' ' + request.receiver.lastName"
+                      class="w-14 h-14 rounded-full object-cover"
+                    />
+                  } @else {
+                    <div class="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-lg font-bold">
+                      {{ getUserInitials(request.receiver) }}
+                    </div>
+                  }
+
+                  <!-- Info -->
+                  <div class="flex-1">
+                    <h3 class="font-semibold">{{ request.receiver.firstName }} {{ request.receiver.lastName }}</h3>
+                    <p class="text-sm text-gray-400">@{{ request.receiver.username }}</p>
+                    <p class="text-xs text-gray-500 mt-1">Sent {{ request.createdAt | date:'medium' }}</p>
+                    <span class="inline-block mt-1 text-xs bg-yellow-600 text-white px-2 py-1 rounded">Pending</span>
+                  </div>
+
+                  <!-- Cancel Button -->
+                  <button
+                    (click)="cancelRequest(request.id)"
+                    class="bg-gray-700 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Search Tab -->
+    @if (activeTab() === 'search') {
+      <div class="max-w-2xl mx-auto">
+        <!-- Search Input -->
+        <div class="mb-8">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (input)="onSearch()"
+              placeholder="Search by username, first name, or last name..."
+              class="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 pl-12 focus:border-red-600 focus:ring-1 focus:ring-red-600"
+            />
+            <svg class="w-5 h-5 absolute left-4 top-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <p class="text-sm text-gray-400 mt-2">Search for users to add as friends</p>
+        </div>
+
+        <!-- Search Results -->
+        @if (isSearching()) {
+          <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+          </div>
+        } @else if (searchQuery().length < 2) {
+          <div class="text-center py-12 text-gray-500">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <p>Enter at least 2 characters to search</p>
+          </div>
+        } @else if (searchResults().length === 0) {
+          <div class="text-center py-12 text-gray-500">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p>No users found matching "{{ searchQuery() }}"</p>
+          </div>
+        } @else {
+          <div class="space-y-4">
+            @for (user of searchResults(); track user.id) {
+              <div class="bg-gray-800 rounded-lg p-4 flex items-center gap-4">
+                <!-- Avatar -->
+                @if (user.profilePictureUrl) {
+                  <img
+                    [src]="user.profilePictureUrl"
+                    [alt]="user.firstName + ' ' + user.lastName"
+                    class="w-14 h-14 rounded-full object-cover"
+                  />
+                } @else {
+                  <div class="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-lg font-bold">
+                    {{ getUserInitials(user) }}
+                  </div>
+                }
+
+                <!-- Info -->
+                <div class="flex-1">
+                  <h3 class="font-semibold">{{ user.firstName }} {{ user.lastName }}</h3>
+                  <p class="text-sm text-gray-400">@{{ user.username }}</p>
+                </div>
+
+                <!-- Add Button -->
+                <button
+                  (click)="addFriend(user.id)"
+                  class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                  </svg>
+                  Add Friend
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
