@@ -296,11 +296,12 @@ public class UserService {
      * Search users
      */
     @Transactional(readOnly = true)
-    public List<UserResponse> searchUsers(String searchTerm) {
+    public List<UserResponse> searchUsers(String searchTerm, String currentUserId) {
         List<User> users = userRepository.searchByUsername(searchTerm);
         users.addAll(userRepository.searchByFullName(searchTerm));
         return users.stream()
                 .distinct()
+                .filter(user -> !user.getId().equals(currentUserId))
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
     }
@@ -396,14 +397,10 @@ public class UserService {
      * Get user's friends list
      */
     @Transactional(readOnly = true)
-    public List<UserResponse> getFriends(String userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
-
-        return user.getFriends().stream()
-                .map(this::convertToUserResponse)
-                .collect(Collectors.toList());
+    public List<FriendResponse> getFriends(String userId) {
+        return friendRequestRepository.findAllFriends(userId);
     }
+
 
     /**
      * Add a friend (now sends a friend request instead)
@@ -486,23 +483,30 @@ public class UserService {
             throw new IllegalStateException("Users are already friends");
         }
 
-        // Check if a pending request already exists
-        if (friendRequestRepository.existsPendingRequestBetweenUsers(senderId, receiverId)) {
-            throw new IllegalStateException("A friend request already exists between these users");
+        Map<String, String> statusMessages = Map.of(
+                "PENDING", "A pending friend request already exists between these users",
+                "ACCEPTED", "You are already friends with this user",
+                "REJECTED", "A friend request was rejected previously between these users"
+        );
+
+        for (var entry : statusMessages.entrySet()) {
+            String status = entry.getKey();
+            String message = entry.getValue();
+
+            if (friendRequestRepository.existsStatusRequestBetweenUsers(senderId, receiverId, status)) {
+                throw new IllegalStateException(message);
+            }
         }
 
         // Create and save friend request
         FriendRequest request = FriendRequest.builder()
                 .sender(sender)
                 .receiver(receiver)
-                .status(FriendRequestStatus.PENDING)
-                .createdAt(LocalDateTime.now())
                 .build();
 
         request.onCreate();
         FriendRequest savedRequest = friendRequestRepository.save(request);
-
-        return convertToFriendRequestResponse(savedRequest);
+        return savedRequest.convertToFriendRequestResponse();
     }
 
     /**
@@ -585,9 +589,11 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<FriendRequestResponse> getPendingFriendRequests(String userId) {
-        return friendRequestRepository.findPendingRequestsDataForUser(userId).stream()
-                .map(this::convertMapToFriendRequestResponse)
-                .collect(Collectors.toList());
+        var a = friendRequestRepository.findPendingRequestsDataForUser(userId);
+        System.out.println("0000000000000000000000000000000000000000000000000000000000000");
+        System.out.println(a);
+        System.out.println("0000000000000000000000000000000000000000000000000000000000000");
+        return a;
     }
 
     /**
@@ -595,9 +601,11 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<FriendRequestResponse> getSentFriendRequests(String userId) {
-        return friendRequestRepository.findRequestsDataSentByUser(userId).stream()
-                .map(this::convertMapToFriendRequestResponse)
-                .collect(Collectors.toList());
+        var a = friendRequestRepository.findRequestsDataSentByUser(userId);
+        System.out.println("fdfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        System.out.println(a);
+        System.out.println("fdfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        return a;
     }
 
     /**
@@ -606,39 +614,5 @@ public class UserService {
     @Transactional(readOnly = true)
     public long getPendingRequestCount(String userId) {
         return friendRequestRepository.countPendingRequestsForUser(userId);
-    }
-
-    /**
-     * Convert FriendRequest to FriendRequestResponse
-     */
-    private FriendRequestResponse convertToFriendRequestResponse(FriendRequest request) {
-        return FriendRequestResponse.builder()
-                .id(request.getId())
-                .sender(convertToUserResponse(request.getSender()))
-                .receiver(convertToUserResponse(request.getReceiver()))
-                .status(request.getStatus())
-                .createdAt(request.getCreatedAt())
-                .respondedAt(request.getRespondedAt())
-                .message(request.getMessage())
-                .build();
-    }
-
-    /**
-     * Convert Map data from Neo4j query to FriendRequestResponse
-     */
-    private FriendRequestResponse convertMapToFriendRequestResponse(Map<String, Object> data) {
-        User sender = (User) data.get("sender");
-        User receiver = (User) data.get("receiver");
-        String status = (String) data.get("status");
-
-        return FriendRequestResponse.builder()
-                .id((String) data.get("requestId"))
-                .sender(convertToUserResponse(sender))
-                .receiver(convertToUserResponse(receiver))
-                .status(FriendRequest.FriendRequestStatus.valueOf(status))
-                .createdAt((LocalDateTime) data.get("createdAt"))
-                .respondedAt((LocalDateTime) data.get("respondedAt"))
-                .message((String) data.get("message"))
-                .build();
     }
 }

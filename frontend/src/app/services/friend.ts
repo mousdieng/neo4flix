@@ -2,9 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { map } from 'rxjs/operators';
 
 export interface Friend {
   id: string;
+  email: string;
   username: string;
   firstName: string;
   lastName: string;
@@ -22,6 +24,33 @@ export interface FriendRequest {
   respondedAt?: string;
   message?: string;
 }
+
+export const mapFriendRequest = (raw: any): FriendRequest => ({
+  id: raw.id,
+  status: raw.status,
+  createdAt: raw.createdAt,
+  respondedAt: raw.respondedAt,
+  sender: {
+    id: raw.senderId,
+    username: raw.senderUsername,
+    firstName: raw.senderFirstName,
+    lastName: raw.senderLastName,
+    fullName: `${raw.senderFirstName} ${raw.senderLastName}`.trim(),
+    friendCount: 0,
+    profilePictureUrl: raw.senderProfilePictureUrl || undefined,
+    email: raw.senderEmail
+  },
+  receiver: {
+    id: raw.receiverId,
+    username: raw.receiverUsername,
+    firstName: raw.receiverFirstName,
+    lastName: raw.receiverLastName,
+    fullName: `${raw.senderFirstName} ${raw.senderLastName}`.trim(),
+    friendCount: 0,
+    profilePictureUrl: raw.receiverProfilePictureUrl || undefined,
+    email: raw.receiverEmail
+  },
+});
 
 @Injectable({
   providedIn: 'root'
@@ -65,18 +94,30 @@ export class FriendService {
     return this.http.get<{ areFriends: boolean }>(`${this.apiUrl}/me/friends/${userId}/status`);
   }
 
-  /**
-   * Get pending friend requests (incoming)
-   */
+  // /**
+  //  * Get pending friend requests (incoming)
+  //  */
+  // getPendingRequests(): Observable<FriendRequest[]> {
+  //   return this.http.get<FriendRequest[]>(`${this.apiUrl}/me/friend-requests/pending`);
+  // }
+  //
+  // /**
+  //  * Get sent friend requests (outgoing)
+  //  */
+  // getSentRequests(): Observable<FriendRequest[]> {
+  //   return this.http.get<FriendRequest[]>(`${this.apiUrl}/me/friend-requests/sent`);
+  // }
+
   getPendingRequests(): Observable<FriendRequest[]> {
-    return this.http.get<FriendRequest[]>(`${this.apiUrl}/me/friend-requests/pending`);
+    return this.http
+      .get<any[]>(`${this.apiUrl}/me/friend-requests/pending`)
+      .pipe(map(requests => requests.map(mapFriendRequest)));
   }
 
-  /**
-   * Get sent friend requests (outgoing)
-   */
   getSentRequests(): Observable<FriendRequest[]> {
-    return this.http.get<FriendRequest[]>(`${this.apiUrl}/me/friend-requests/sent`);
+    return this.http
+      .get<any[]>(`${this.apiUrl}/me/friend-requests/sent`)
+      .pipe(map(requests => requests.map(mapFriendRequest)));
   }
 
   /**

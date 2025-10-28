@@ -1,9 +1,6 @@
 package com.neo4flix.userservice.controller;
 
-import com.neo4flix.userservice.dto.ChangePasswordRequest;
-import com.neo4flix.userservice.dto.FriendRequestResponse;
-import com.neo4flix.userservice.dto.UpdateUserRequest;
-import com.neo4flix.userservice.dto.UserResponse;
+import com.neo4flix.userservice.dto.*;
 import com.neo4flix.userservice.model.User;
 import com.neo4flix.userservice.service.FileStorageService;
 import com.neo4flix.userservice.service.UserService;
@@ -154,7 +151,10 @@ public class UserController {
     })
     @GetMapping("/search")
     public ResponseEntity<List<UserResponse>> searchUsers(@Parameter(description = "Search term") @RequestParam String q) {
-        List<UserResponse> users = userService.searchUsers(q);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = (User) authentication.getPrincipal();
+
+        List<UserResponse> users = userService.searchUsers(q, currentUser.getId());
         return ResponseEntity.ok(users);
     }
 
@@ -279,11 +279,11 @@ public class UserController {
         @ApiResponse(responseCode = "401", description = "User not authenticated")
     })
     @GetMapping("/me/friends")
-    public ResponseEntity<List<UserResponse>> getMyFriends() {
+    public ResponseEntity<List<FriendResponse>> getMyFriends() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
 
-        List<UserResponse> friends = userService.getFriends(currentUser.getId());
+        List<FriendResponse> friends = userService.getFriends(currentUser.getId());
         return ResponseEntity.ok(friends);
     }
 
@@ -293,8 +293,8 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping("/{userId}/friends")
-    public ResponseEntity<List<UserResponse>> getUserFriends(@Parameter(description = "User ID") @PathVariable String userId) {
-        List<UserResponse> friends = userService.getFriends(userId);
+    public ResponseEntity<List<FriendResponse>> getUserFriends(@Parameter(description = "User ID") @PathVariable String userId) {
+        List<FriendResponse> friends = userService.getFriends(userId);
         return ResponseEntity.ok(friends);
     }
 

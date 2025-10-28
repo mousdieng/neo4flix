@@ -64,10 +64,7 @@ export class Friends implements OnInit {
     this.isSearching.set(true);
     this.userService.searchUsers(query).subscribe({
       next: (users) => {
-        // Filter out current friends
-        const friendIds = this.friends().map(f => f.id);
-        const filtered = users.filter(user => !friendIds.includes(user.id));
-        this.searchResults.set(filtered);
+        this.searchResults.set(users);
         this.isSearching.set(false);
       },
       error: (error) => {

@@ -1,5 +1,8 @@
 package com.neo4flix.userservice.repository;
 
+import com.neo4flix.userservice.dto.FriendRequestResponse;
+import com.neo4flix.userservice.dto.FriendResponse;
+import com.neo4flix.userservice.dto.UserResponse;
 import com.neo4flix.userservice.model.FriendRequest;
 import com.neo4flix.userservice.model.FriendRequest.FriendRequestStatus;
 import com.neo4flix.userservice.model.User;
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Repository interface for FriendRequest entity
@@ -18,30 +22,63 @@ import java.util.Optional;
 @Repository
 public interface FriendRequestRepository extends Neo4jRepository<FriendRequest, String> {
 
+    @Query("""
+        MATCH (u:User {id: $userId})-[:FRIENDS_WITH]-(f:User)
+        RETURN f.id AS id,
+               f.username AS username,
+               f.firstName AS firstName,
+               f.lastName AS lastName,
+               f.email AS email,
+               f.profilePictureUrl AS profilePictureUrl,
+               SIZE([(f)-[:FRIENDS_WITH]-() | 1]) AS friendCount
+    """)
+    List<FriendResponse> findAllFriends(@Param("userId") String userId);
+
     /**
      * Find all pending friend requests sent to a user with sender and receiver details
+     * fr.message AS message,
      */
     @Query("""
         MATCH (sender:User)-[:SENT_BY]-(fr:FriendRequest)-[:SENT_TO]->(receiver:User {id: $userId})
         WHERE fr.status = 'PENDING'
-        RETURN fr.id AS requestId, fr.status AS status, fr.createdAt AS createdAt,
-               fr.respondedAt AS respondedAt, fr.message AS message,
-               sender AS sender, receiver AS receiver
+        RETURN fr.id AS id, fr.status AS status, fr.createdAt AS createdAt,
+               fr.respondedAt AS respondedAt,
+               sender.id AS senderId,
+               sender.username AS senderUsername,
+               sender.firstName AS senderFirstName,
+               sender.lastName AS senderLastName,
+               sender.email AS senderEmail,
+               receiver.id AS receiverId,
+               sender.username AS receiverUsername,
+               receiver.firstName AS receiverFirstName,
+               receiver.lastName AS receiverLastName,
+               receiver.email AS receiverEmail
         ORDER BY fr.createdAt DESC
         """)
-    List<Map<String, Object>> findPendingRequestsDataForUser(@Param("userId") String userId);
+    List<FriendRequestResponse> findPendingRequestsDataForUser(@Param("userId") String userId);
 
     /**
      * Find all friend requests sent by a user with sender and receiver details
+     * , fr.message AS message
+     * sender AS sender, receiver AS receiver
      */
     @Query("""
         MATCH (sender:User {id: $userId})-[:SENT_BY]-(fr:FriendRequest)-[:SENT_TO]->(receiver:User)
-        RETURN fr.id AS requestId, fr.status AS status, fr.createdAt AS createdAt,
-               fr.respondedAt AS respondedAt, fr.message AS message,
-               sender AS sender, receiver AS receiver
+        RETURN fr.id AS id, fr.status AS status, fr.createdAt AS createdAt,
+               fr.respondedAt AS respondedAt,
+               sender.id AS senderId,
+               sender.username AS senderUsername,
+               sender.firstName AS senderFirstName,
+               sender.lastName AS senderLastName,
+               sender.email AS senderEmail,
+               receiver.id AS receiverId,
+               receiver.username AS receiverUsername,
+               receiver.firstName AS receiverFirstName,
+               receiver.lastName AS receiverLastName,
+               receiver.email AS receiverEmail
         ORDER BY fr.createdAt DESC
         """)
-    List<Map<String, Object>> findRequestsDataSentByUser(@Param("userId") String userId);
+    List<FriendRequestResponse> findRequestsDataSentByUser(@Param("userId") String userId);
 
     /**
      * Find a specific friend request between two users
@@ -64,7 +101,7 @@ public interface FriendRequestRepository extends Neo4jRepository<FriendRequest, 
      */
     @Query("""
         MATCH (fr:FriendRequest)
-        WHERE fr.status = 'PENDING'
+        WHERE fr.status = $status
         AND (
             (fr)-[:SENT_BY]->(:User {id: $userId1}) AND (fr)-[:SENT_TO]->(:User {id: $userId2})
             OR
@@ -72,9 +109,10 @@ public interface FriendRequestRepository extends Neo4jRepository<FriendRequest, 
         )
         RETURN COUNT(fr) > 0
         """)
-    boolean existsPendingRequestBetweenUsers(
+    boolean existsStatusRequestBetweenUsers(
         @Param("userId1") String userId1,
-        @Param("userId2") String userId2
+        @Param("userId2") String userId2,
+        @Param("status") String status
     );
 
     /**

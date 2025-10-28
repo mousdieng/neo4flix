@@ -1,5 +1,6 @@
 package com.neo4flix.userservice.model;
 
+import com.neo4flix.userservice.dto.FriendRequestResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -64,5 +65,24 @@ public class FriendRequest {
         if (this.status == null) {
             this.status = FriendRequestStatus.PENDING;
         }
+    }
+
+    public FriendRequestResponse convertToFriendRequestResponse() {
+        return FriendRequestResponse.builder()
+                .id(this.getId())
+//                .senderId(senderId)
+//                .senderEmail(senderEmail)
+//                .senderFirstName(senderFirstName)
+//                .senderLastName(senderLastName)
+//                .senderUsername(senderUsername)
+//                .receiverId(receiverId)
+//                .receiverEmail(receiverEmail)
+//                .receiverFirstName(receiverFirstName)
+//                .receiverLastName(receiverLastName)
+//                .receiverUsername(receiverUsername)
+                .status(this.getStatus())
+                .createdAt(this.getCreatedAt())
+                .respondedAt(this.getRespondedAt())
+                .build();
     }
 }
