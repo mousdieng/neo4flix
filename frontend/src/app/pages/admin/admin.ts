@@ -258,12 +258,12 @@ export class Admin implements OnInit {
     }
 
     if (editing) {
-      // Update existing movie
-      this.adminService.updateMovie(editing.id, movie).subscribe({
+      // Update existing movie with files
+      this.adminService.updateMovie(editing.id, movie, this.selectedPosterFile || undefined, this.selectedTrailerFile || undefined).subscribe({
         next: (updatedMovie) => {
           this.toastService.success(`Movie "${updatedMovie.title}" updated successfully`);
-          // Upload files if selected
-          this.uploadMovieFiles(updatedMovie.id);
+          this.closeMovieForm();
+          this.loadMovies(this.moviesPage());
         },
         error: (err) => {
           console.error('Error updating movie:', err);
@@ -271,69 +271,18 @@ export class Admin implements OnInit {
         }
       });
     } else {
-      // Create new movie
-      this.adminService.createMovie(movie).subscribe({
+      // Create new movie with files
+      this.adminService.createMovie(movie, this.selectedPosterFile || undefined, this.selectedTrailerFile || undefined).subscribe({
         next: (createdMovie) => {
           this.toastService.success(`Movie "${createdMovie.title}" created successfully`);
-          // Upload files if selected
-          this.uploadMovieFiles(createdMovie.id);
+          this.closeMovieForm();
+          this.loadMovies(this.moviesPage());
         },
         error: (err) => {
           console.error('Error creating movie:', err);
           this.toastService.error('Failed to create movie');
         }
       });
-    }
-  }
-
-  private uploadMovieFiles(movieId: string): void {
-    let uploadCount = 0;
-    const totalUploads = (this.selectedPosterFile ? 1 : 0) + (this.selectedTrailerFile ? 1 : 0);
-
-    const checkComplete = () => {
-      uploadCount++;
-      if (uploadCount === totalUploads || totalUploads === 0) {
-        this.closeMovieForm();
-        this.loadMovies(this.moviesPage());
-      }
-    };
-
-    if (this.selectedPosterFile) {
-      this.uploadingPoster.set(true);
-      this.movieService.uploadMoviePoster(movieId, this.selectedPosterFile).subscribe({
-        next: () => {
-          this.uploadingPoster.set(false);
-          this.toastService.success('Poster uploaded successfully');
-          checkComplete();
-        },
-        error: (err) => {
-          console.error('Error uploading poster:', err);
-          this.uploadingPoster.set(false);
-          this.toastService.warning('Movie saved, but failed to upload poster');
-          checkComplete();
-        }
-      });
-    }
-
-    if (this.selectedTrailerFile) {
-      this.uploadingTrailer.set(true);
-      this.movieService.uploadMovieTrailer(movieId, this.selectedTrailerFile).subscribe({
-        next: () => {
-          this.uploadingTrailer.set(false);
-          this.toastService.success('Trailer uploaded successfully');
-          checkComplete();
-        },
-        error: (err) => {
-          console.error('Error uploading trailer:', err);
-          this.uploadingTrailer.set(false);
-          this.toastService.warning('Movie saved, but failed to upload trailer');
-          checkComplete();
-        }
-      });
-    }
-
-    if (totalUploads === 0) {
-      checkComplete();
     }
   }
 

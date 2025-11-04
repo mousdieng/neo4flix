@@ -20,6 +20,12 @@ import java.util.Optional;
 public interface UserRepository extends Neo4jRepository<User, String> {
 
     /**
+     * Find user by ID with relationships loaded (depth=2)
+     */
+    @Query("MATCH (u:User {id: $id}) OPTIONAL MATCH (u)-[r]-(related) RETURN u, collect(r), collect(related)")
+    Optional<User> findById(@Param("id") String id);
+
+    /**
      * Find user by username
      */
     Optional<User> findByUsername(String username);
@@ -184,4 +190,15 @@ public interface UserRepository extends Neo4jRepository<User, String> {
         RETURN count(u)
         """)
     Page<User> findUsersWithSearch(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    /**
+     * Create bidirectional friendship between two users
+     */
+    @Query("""
+        MATCH (u1:User {id: $userId1}), (u2:User {id: $userId2})
+        MERGE (u1)-[:FRIENDS_WITH]->(u2)
+        MERGE (u2)-[:FRIENDS_WITH]->(u1)
+        RETURN count(u1) as count
+        """)
+    Integer createFriendship(@Param("userId1") String userId1, @Param("userId2") String userId2);
 }

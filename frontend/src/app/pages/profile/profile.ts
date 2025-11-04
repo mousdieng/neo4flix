@@ -24,6 +24,10 @@ export class Profile implements OnInit {
   public passwordForm!: FormGroup;
   public selectedFile: File | null = null;
   public uploadingAvatar = signal(false);
+  public twoFactorQrCode = signal<string | null>(null);
+  public twoFactorSecret = signal<string | null>(null);
+  public showDisable2FAPrompt = signal(false);
+  public twoFactorCode = signal('');
 
   constructor(
     private userService: UserService,
@@ -229,5 +233,82 @@ export class Profile implements OnInit {
         this.uploadingAvatar.set(false);
       }
     });
+  }
+
+  public enable2FA(): void {
+    this.isLoading.set(true);
+    this.clearMessages();
+
+    this.userService.enable2FA().subscribe({
+      next: (response) => {
+        this.twoFactorQrCode.set(response.qrCode);
+        this.twoFactorSecret.set(response.secret);
+
+        const currentProfile = this.profile();
+        if (currentProfile) {
+          currentProfile.twoFactorEnabled = true;
+          this.profile.set({...currentProfile});
+        }
+        this.successMessage.set('Two-factor authentication enabled! Scan the QR code or manually enter the secret key.');
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error enabling 2FA:', error);
+        this.errorMessage.set(error.error || 'Failed to enable two-factor authentication');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  public disable2FA(): void {
+    const code = this.twoFactorCode();
+    if (!code || code.length !== 6) {
+      this.errorMessage.set('Please enter a valid 6-digit code');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.clearMessages();
+
+    this.userService.disable2FA(code).subscribe({
+      next: (message) => {
+        this.twoFactorQrCode.set(null);
+        this.twoFactorSecret.set(null);
+        this.showDisable2FAPrompt.set(false);
+        this.twoFactorCode.set('');
+        const currentProfile = this.profile();
+        if (currentProfile) {
+          currentProfile.twoFactorEnabled = false;
+          this.profile.set({...currentProfile});
+        }
+        this.successMessage.set(message || 'Two-factor authentication disabled successfully');
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error disabling 2FA:', error);
+        this.errorMessage.set(error.error || 'Failed to disable two-factor authentication. Check your code.');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  public toggleDisable2FAPrompt(): void {
+    this.showDisable2FAPrompt.update(v => !v);
+    this.twoFactorCode.set('');
+    this.clearMessages();
+  }
+
+  public copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.successMessage.set('Copied to clipboard!');
+      setTimeout(() => this.clearMessages(), 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  }
+
+  public clearQrCode(): void {
+    this.twoFactorQrCode.set(null);
+    this.twoFactorSecret.set(null);
   }
 }

@@ -156,12 +156,46 @@ export class AdminService {
     return this.http.get<{ success: boolean; data: Movie }>(`${this.movieApiUrl}/${movieId}`);
   }
 
-  createMovie(movie: CreateMovieRequest): Observable<Movie> {
-    return this.http.post<Movie>(this.movieApiUrl, movie);
+  createMovie(movie: CreateMovieRequest, posterFile?: File, trailerFile?: File): Observable<Movie> {
+    // If files are provided, use FormData (multipart), otherwise use JSON
+    if (posterFile || trailerFile) {
+      const formData = new FormData();
+      formData.append('movie', JSON.stringify(movie));
+
+      if (posterFile) {
+        formData.append('poster', posterFile);
+      }
+
+      if (trailerFile) {
+        formData.append('trailer', trailerFile);
+      }
+
+      return this.http.post<Movie>(this.movieApiUrl, formData);
+    } else {
+      // No files, send as JSON
+      return this.http.post<Movie>(this.movieApiUrl, movie);
+    }
   }
 
-  updateMovie(movieId: string, movie: UpdateMovieRequest): Observable<Movie> {
-    return this.http.put<Movie>(`${this.movieApiUrl}/${movieId}`, movie);
+  updateMovie(movieId: string, movie: UpdateMovieRequest, posterFile?: File, trailerFile?: File): Observable<Movie> {
+    // If files are provided, use FormData (multipart), otherwise use JSON
+    if (posterFile || trailerFile) {
+      const formData = new FormData();
+      formData.append('movie', JSON.stringify(movie));
+
+      if (posterFile) {
+        formData.append('poster', posterFile);
+      }
+
+      if (trailerFile) {
+        formData.append('trailer', trailerFile);
+      }
+
+      return this.http.put<Movie>(`${this.movieApiUrl}/${movieId}`, formData);
+    } else {
+      // No files, send as JSON
+      return this.http.put<Movie>(`${this.movieApiUrl}/${movieId}`, movie);
+    }
   }
 
   deleteMovie(movieId: string): Observable<void> {

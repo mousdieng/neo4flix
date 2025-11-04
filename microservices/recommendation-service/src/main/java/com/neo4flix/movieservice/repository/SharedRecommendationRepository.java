@@ -19,10 +19,10 @@ public interface SharedRecommendationRepository extends Neo4jRepository<SharedRe
      * Get all recommendations shared with a user (received from friends)
      */
     @Query("""
-        MATCH (fromUser:User)-[:FRIENDS_WITH]->(toUser:User {id: $userId})
+        MATCH (fromUser:User)-[:FRIENDS_WITH]-(toUser:User {id: $userId})
         MATCH (sr:SharedRecommendation {to_user_id: $userId, from_user_id: fromUser.id})
         MATCH (m:Movie {id: sr.movie_id})
-        RETURN sr.id AS id,
+        RETURN DISTINCT sr.id AS id,
                sr.from_user_id AS fromUserId,
                fromUser.username AS fromUsername,
                sr.to_user_id AS toUserId,
@@ -39,10 +39,10 @@ public interface SharedRecommendationRepository extends Neo4jRepository<SharedRe
      * Get all recommendations shared by a user (sent to friends)
      */
     @Query("""
-        MATCH (fromUser:User {id: $userId})-[:FRIENDS_WITH]->(toUser:User)
+        MATCH (fromUser:User {id: $userId})-[:FRIENDS_WITH]-(toUser:User)
         MATCH (sr:SharedRecommendation {from_user_id: $userId, to_user_id: toUser.id})
         MATCH (m:Movie {id: sr.movie_id})
-        RETURN sr.id AS id,
+        RETURN DISTINCT sr.id AS id,
                sr.from_user_id AS fromUserId,
                fromUser.username AS fromUsername,
                sr.to_user_id AS toUserId,

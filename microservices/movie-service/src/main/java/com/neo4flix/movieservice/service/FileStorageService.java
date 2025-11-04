@@ -25,7 +25,7 @@ public class FileStorageService {
      *
      * @param file      The file to upload
      * @param folder    The folder/prefix to store the file under (e.g., "posters", "trailers")
-     * @return The URL to access the uploaded file
+     * @return The object key (path) of the uploaded file (e.g., "posters/uuid.png")
      */
     public String uploadFile(MultipartFile file, String folder) {
         try {
@@ -55,8 +55,9 @@ public class FileStorageService {
 
             log.info("Successfully uploaded file: {}", filename);
 
-            // Return the URL to access the file
-            return getFileUrl(filename);
+            // Return just the object key, not a presigned URL
+            // Presigned URLs will be generated on-demand when retrieving movies
+            return filename;
 
         } catch (Exception e) {
             log.error("Error uploading file to MinIO", e);
@@ -89,12 +90,20 @@ public class FileStorageService {
     /**
      * Delete a file from MinIO
      *
-     * @param fileUrl The URL of the file to delete
+     * @param fileUrlOrKey The URL or object key of the file to delete
      */
-    public void deleteFile(String fileUrl) {
+    public void deleteFile(String fileUrlOrKey) {
         try {
-            // Extract filename from URL
-            String filename = extractFilenameFromUrl(fileUrl);
+            String filename;
+
+            // Check if it's a URL or just an object key
+            if (fileUrlOrKey.startsWith("http://") || fileUrlOrKey.startsWith("https://")) {
+                // Extract filename from URL
+                filename = extractFilenameFromUrl(fileUrlOrKey);
+            } else {
+                // Already an object key
+                filename = fileUrlOrKey;
+            }
 
             if (filename != null && !filename.isEmpty()) {
                 minioClient.removeObject(

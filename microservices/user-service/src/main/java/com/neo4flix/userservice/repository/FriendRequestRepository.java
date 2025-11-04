@@ -24,7 +24,7 @@ public interface FriendRequestRepository extends Neo4jRepository<FriendRequest, 
 
     @Query("""
         MATCH (u:User {id: $userId})-[:FRIENDS_WITH]-(f:User)
-        RETURN f.id AS id,
+        RETURN DISTINCT f.id AS id,
                f.username AS username,
                f.firstName AS firstName,
                f.lastName AS lastName,

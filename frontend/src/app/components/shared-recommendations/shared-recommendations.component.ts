@@ -32,11 +32,15 @@ export class SharedRecommendationsComponent implements OnInit {
 
     this.recommendationService.getSharedRecommendations().subscribe({
       next: (shared) => {
+        console.log('Received shared recommendations:', shared);
+        console.log('Number of shared recommendations:', shared?.length);
         this.sharedRecommendations.set(shared);
         this.loading.set(false);
       },
       error: (err) => {
         console.error('Error loading shared recommendations:', err);
+        console.error('Error details:', err.error);
+        console.error('Error status:', err.status);
         this.error.set('Failed to load shared recommendations');
         this.loading.set(false);
       }

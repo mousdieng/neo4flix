@@ -69,10 +69,25 @@
 
           <!-- Shared Info -->
           <div class="shared-info">
-            <h3 class="movie-title">{{ shared.movie.title }}</h3>
+            <div class="title-row">
+              <h3 class="movie-title">{{ shared.movie.title }}</h3>
+              @if (shared.movie.releaseYear) {
+                <span class="movie-year">{{ shared.movie.releaseYear }}</span>
+              }
+            </div>
 
-            @if (shared.movie.releaseYear) {
-              <p class="movie-year">{{ shared.movie.releaseYear }}</p>
+            <!-- Genres -->
+            @if (shared.movie.genres && shared.movie.genres.length > 0) {
+              <div class="genres">
+                @for (genre of shared.movie.genres.slice(0, 3); track genre) {
+                  <span class="genre-tag">{{ genre }}</span>
+                }
+              </div>
+            }
+
+            <!-- Movie Overview -->
+            @if (shared.movie.plot) {
+              <p class="movie-overview">{{ shared.movie.plot }}</p>
             }
 
             <div class="shared-by">
@@ -91,25 +106,34 @@
               </div>
             }
 
-            <div class="shared-time">
-              <svg class="time-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span>{{ getTimeAgo(shared.sharedAt) }}</span>
-            </div>
+            <div class="bottom-row">
+              <div class="shared-time">
+                <svg class="time-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>{{ getTimeAgo(shared.sharedAt) }}</span>
+              </div>
 
-            @if (!shared.viewed) {
-              <button
-                class="mark-viewed-button"
-                (click)="markAsViewed(shared); $event.stopPropagation()"
-              >
-                Mark as Viewed
-              </button>
-            } @else if (shared.viewedAt) {
-              <p class="viewed-text">
-                Viewed {{ getTimeAgo(shared.viewedAt) }}
-              </p>
-            }
+              @if (!shared.viewed) {
+                <button
+                  class="mark-viewed-button"
+                  (click)="markAsViewed(shared); $event.stopPropagation()"
+                >
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  Mark as Viewed
+                </button>
+              } @else if (shared.viewedAt) {
+                <p class="viewed-text">
+                  <svg fill="currentColor" viewBox="0 0 20 20" width="16" height="16">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  Viewed {{ getTimeAgo(shared.viewedAt) }}
+                </p>
+              }
+            </div>
           </div>
 
           <!-- Movie Rating -->

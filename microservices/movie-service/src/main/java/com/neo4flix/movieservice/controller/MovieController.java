@@ -50,9 +50,34 @@ public class MovieController {
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "409", description = "Movie already exists")
     })
-    @PostMapping
+    @PostMapping(consumes = "application/json", produces = "application/json")
     public ResponseEntity<MovieResponse> createMovie(@Valid @RequestBody CreateMovieRequest request) {
         MovieResponse response = movieService.createMovie(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Operation(summary = "Create a new movie with files", description = "Creates a new movie with the provided information and optional files")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Movie created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "409", description = "Movie already exists")
+    })
+    @PostMapping(consumes = "multipart/form-data", produces = "application/json")
+    public ResponseEntity<MovieResponse> createMovieWithFiles(
+            @Parameter(description = "Movie data as JSON string") @RequestParam("movie") String movieJson,
+            @Parameter(description = "Optional poster image file") @RequestParam(value = "poster", required = false) MultipartFile posterFile,
+            @Parameter(description = "Optional trailer video file") @RequestParam(value = "trailer", required = false) MultipartFile trailerFile) {
+
+        // Parse JSON to CreateMovieRequest
+        CreateMovieRequest request;
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            request = objectMapper.readValue(movieJson, CreateMovieRequest.class);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        MovieResponse response = movieService.createMovie(request, posterFile, trailerFile);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -62,11 +87,37 @@ public class MovieController {
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "404", description = "Movie not found")
     })
-    @PutMapping("/{movieId}")
+    @PutMapping(value = "/{movieId}", consumes = "application/json", produces = "application/json")
     public ResponseEntity<MovieResponse> updateMovie(
             @Parameter(description = "Movie ID") @PathVariable String movieId,
             @Valid @RequestBody UpdateMovieRequest request) {
         MovieResponse response = movieService.updateMovie(movieId, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Update a movie with files", description = "Updates an existing movie with the provided information and optional files")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Movie updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "404", description = "Movie not found")
+    })
+    @PutMapping(value = "/{movieId}", consumes = "multipart/form-data", produces = "application/json")
+    public ResponseEntity<MovieResponse> updateMovieWithFiles(
+            @Parameter(description = "Movie ID") @PathVariable String movieId,
+            @Parameter(description = "Movie data as JSON string") @RequestParam("movie") String movieJson,
+            @Parameter(description = "Optional poster image file") @RequestParam(value = "poster", required = false) MultipartFile posterFile,
+            @Parameter(description = "Optional trailer video file") @RequestParam(value = "trailer", required = false) MultipartFile trailerFile) {
+
+        // Parse JSON to UpdateMovieRequest
+        UpdateMovieRequest request;
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            request = objectMapper.readValue(movieJson, UpdateMovieRequest.class);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        MovieResponse response = movieService.updateMovie(movieId, request, posterFile, trailerFile);
         return ResponseEntity.ok(response);
     }
 

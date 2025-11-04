@@ -6,6 +6,7 @@ import com.neo4flix.movieservice.dto.CreateMovieRequest;
 import com.neo4flix.movieservice.dto.UpdateMovieRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,9 +22,19 @@ public interface MovieService {
     MovieResponse createMovie(CreateMovieRequest request);
 
     /**
+     * Create a new movie with optional file uploads
+     */
+    MovieResponse createMovie(CreateMovieRequest request, MultipartFile posterFile, MultipartFile trailerFile);
+
+    /**
      * Update an existing movie
      */
     MovieResponse updateMovie(String movieId, UpdateMovieRequest request);
+
+    /**
+     * Update an existing movie with optional file uploads
+     */
+    MovieResponse updateMovie(String movieId, UpdateMovieRequest request, MultipartFile posterFile, MultipartFile trailerFile);
 
     /**
      * Delete a movie by ID

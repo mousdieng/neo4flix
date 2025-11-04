@@ -81,4 +81,12 @@ export class UserService {
   searchUsers(query: string): Observable<UserProfile[]> {
     return this.http.get<UserProfile[]>(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`);
   }
+
+  enable2FA(): Observable<{qrCode: string; secret: string}> {
+    return this.http.post<{qrCode: string; secret: string}>(`${this.apiUrl}/me/enable-2fa`, {});
+  }
+
+  disable2FA(code: string): Observable<string> {
+    return this.http.post(`${this.apiUrl}/me/disable-2fa?twoFactorCode=${code}`, {}, { responseType: 'text' });
+  }
 }

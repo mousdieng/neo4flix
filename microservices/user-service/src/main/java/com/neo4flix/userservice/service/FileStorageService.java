@@ -25,7 +25,7 @@ public class FileStorageService {
      *
      * @param file      The file to upload
      * @param folder    The folder/prefix to store the file under (e.g., "avatars")
-     * @return The URL to access the uploaded file
+     * @return The object key (filename) - NOT a presigned URL
      */
     public String uploadFile(MultipartFile file, String folder) {
         try {
@@ -55,8 +55,9 @@ public class FileStorageService {
 
             log.info("Successfully uploaded file: {}", filename);
 
-            // Return the URL to access the file
-            return getFileUrl(filename);
+            // Return ONLY the object key, not a presigned URL
+            // The presigned URL should be generated on-demand when needed
+            return filename;
 
         } catch (Exception e) {
             log.error("Error uploading file to MinIO", e);
@@ -66,47 +67,70 @@ public class FileStorageService {
 
     /**
      * Get a presigned URL to access a file
+     * THIS METHOD GENERATES TEMPORARY URLs - NEVER STORE THESE IN DATABASE!
      *
-     * @param filename The name of the file in MinIO
-     * @return A presigned URL valid for 7 days
+     * @param objectKey The object key/filename in MinIO (e.g., "avatars/abc123.png")
+     * @return A presigned URL valid for 15 minutes
      */
-    public String getFileUrl(String filename) {
+    public String getFileUrl(String objectKey) {
         try {
+            // If objectKey is null or empty, return null
+            if (objectKey == null || objectKey.isEmpty()) {
+                return null;
+            }
+
+            // If it's already a full URL (legacy data), extract the object key first
+            if (objectKey.startsWith("http")) {
+                objectKey = extractFilenameFromUrl(objectKey);
+                if (objectKey == null) {
+                    return null;
+                }
+            }
+
+            // Generate a SHORT-LIVED presigned URL (15 minutes)
+            // These URLs should NEVER be stored in database
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(minioProperties.getBucketName())
-                            .object(filename)
-                            .expiry(7, TimeUnit.DAYS)
+                            .object(objectKey)
+                            .expiry(15, TimeUnit.MINUTES)
                             .build()
             );
         } catch (Exception e) {
-            log.error("Error generating presigned URL for file: {}", filename, e);
-            throw new RuntimeException("Failed to generate file URL", e);
+            log.error("Error generating presigned URL for file: {}", objectKey, e);
+            return null; // Return null instead of throwing exception
         }
     }
 
     /**
      * Delete a file from MinIO
      *
-     * @param fileUrl The URL of the file to delete
+     * @param objectKey The object key/filename (e.g., "avatars/abc123.png") or legacy URL
      */
-    public void deleteFile(String fileUrl) {
+    public void deleteFile(String objectKey) {
         try {
-            // Extract filename from URL
-            String filename = extractFilenameFromUrl(fileUrl);
+            // If null or empty, nothing to delete
+            if (objectKey == null || objectKey.isEmpty()) {
+                return;
+            }
 
-            if (filename != null && !filename.isEmpty()) {
+            // If it's a URL (legacy data), extract the object key
+            if (objectKey.startsWith("http")) {
+                objectKey = extractFilenameFromUrl(objectKey);
+            }
+
+            if (objectKey != null && !objectKey.isEmpty()) {
                 minioClient.removeObject(
                         RemoveObjectArgs.builder()
                                 .bucket(minioProperties.getBucketName())
-                                .object(filename)
+                                .object(objectKey)
                                 .build()
                 );
-                log.info("Successfully deleted file: {}", filename);
+                log.info("Successfully deleted file: {}", objectKey);
             }
         } catch (Exception e) {
-            log.error("Error deleting file from MinIO", e);
+            log.error("Error deleting file from MinIO: {}", objectKey, e);
             throw new RuntimeException("Failed to delete file", e);
         }
     }

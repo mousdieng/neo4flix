@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  // Production API URL - should use HTTPS
+  // Production API URL - Update this when you deploy your backend
   apiUrl: 'https://api.neo4flix.com/api/v1',
   gatewayUrl: 'https://api.neo4flix.com',
 

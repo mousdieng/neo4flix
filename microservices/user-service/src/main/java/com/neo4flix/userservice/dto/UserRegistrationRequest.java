@@ -1,5 +1,6 @@
 package com.neo4flix.userservice.dto;
 
+import com.neo4flix.userservice.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -26,7 +27,7 @@ public class UserRegistrationRequest {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters long")
+    @ValidPassword
     private String password;
 
     @Size(max = 50, message = "First name cannot exceed 50 characters")

@@ -15,6 +15,9 @@ export class Login {
   public showPassword = false;
   public isLoading = signal(false);
   public error = signal<string | null>(null);
+  public requiresTwoFactor = signal(false);
+  public twoFactorCode = signal('');
+  private storedCredentials: LoginRequest | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -33,22 +36,44 @@ export class Login {
   }
 
   public onSubmit(): void {
-    if (this.loginForm.valid) {
+    if (this.loginForm.valid || this.requiresTwoFactor()) {
       this.isLoading.set(true);
       this.error.set(null);
 
-      const credentials: LoginRequest = {
-        usernameOrEmail: this.loginForm.value.usernameOrEmail,
-        password: this.loginForm.value.password
-      };
+      let credentials: LoginRequest;
+
+      if (this.requiresTwoFactor()) {
+        // Second step: submit with 2FA code
+        if (!this.storedCredentials) {
+          this.error.set('Session expired. Please try again.');
+          this.isLoading.set(false);
+          this.requiresTwoFactor.set(false);
+          return;
+        }
+        credentials = {
+          ...this.storedCredentials,
+          twoFactorCode: this.twoFactorCode()
+        };
+      } else {
+        // First step: submit username/password
+        credentials = {
+          usernameOrEmail: this.loginForm.value.usernameOrEmail,
+          password: this.loginForm.value.password
+        };
+      }
 
       this.authService.login(credentials).subscribe({
         next: (response) => {
           this.isLoading.set(false);
           if (response.requiresTwoFactor) {
-            // Handle 2FA if needed in the future
-            this.error.set('Two-factor authentication is required');
+            // 2FA required - show code input
+            this.storedCredentials = credentials;
+            this.requiresTwoFactor.set(true);
+            this.twoFactorCode.set('');
           } else if (response.accessToken) {
+            // Login successful
+            this.requiresTwoFactor.set(false);
+            this.storedCredentials = null;
             this.router.navigate(['/home']);
           } else {
             this.error.set('Login failed');
@@ -60,5 +85,12 @@ export class Login {
         }
       });
     }
+  }
+
+  public cancelTwoFactor(): void {
+    this.requiresTwoFactor.set(false);
+    this.twoFactorCode.set('');
+    this.storedCredentials = null;
+    this.error.set(null);
   }
 }

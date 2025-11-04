@@ -6,6 +6,7 @@ import com.neo4flix.movieservice.exception.DuplicateMovieException;
 import com.neo4flix.movieservice.model.*;
 import com.neo4flix.movieservice.repository.MovieRepository;
 import com.neo4flix.movieservice.service.MovieService;
+import com.neo4flix.movieservice.service.FileStorageService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,9 +29,15 @@ import java.util.stream.Collectors;
 public class MovieServiceImpl implements MovieService {
 
     private final MovieRepository movieRepository;
+    private final FileStorageService fileStorageService;
 
     @Override
     public MovieResponse createMovie(CreateMovieRequest request) {
+        return createMovie(request, null, null);
+    }
+
+    @Override
+    public MovieResponse createMovie(CreateMovieRequest request, MultipartFile posterFile, MultipartFile trailerFile) {
         // Check if movie already exists
         Optional<Movie> existingMovie = movieRepository.findByTitleAndReleaseYear(
             request.getTitle(), request.getReleaseYear());
@@ -43,14 +51,43 @@ public class MovieServiceImpl implements MovieService {
         Movie movie = new Movie();
         request.mapRequestToMovie(movie);
 
-        // Save movie
+        // Upload poster if provided
+        if (posterFile != null && !posterFile.isEmpty()) {
+            try {
+                String posterUrl = fileStorageService.uploadFile(posterFile, "posters");
+                movie.setPosterUrl(posterUrl);
+                log.info("Uploaded poster for movie '{}': {}", movie.getTitle(), posterUrl);
+            } catch (Exception e) {
+                log.error("Failed to upload poster for movie '{}'", movie.getTitle(), e);
+                // Continue without poster - non-critical failure
+            }
+        }
+
+        // Upload trailer if provided
+        if (trailerFile != null && !trailerFile.isEmpty()) {
+            try {
+                String trailerUrl = fileStorageService.uploadFile(trailerFile, "trailers");
+                movie.setTrailerUrl(trailerUrl);
+                log.info("Uploaded trailer for movie '{}': {}", movie.getTitle(), trailerUrl);
+            } catch (Exception e) {
+                log.error("Failed to upload trailer for movie '{}'", movie.getTitle(), e);
+                // Continue without trailer - non-critical failure
+            }
+        }
+
+        // Save movie with uploaded file URLs
         Movie savedMovie = movieRepository.save(movie);
         return savedMovie.mapMovieToResponse();
     }
 
     @Override
     public MovieResponse updateMovie(String movieId, UpdateMovieRequest request) {
-        Movie movie = movieRepository.findById(movieId)
+        return updateMovie(movieId, request, null, null);
+    }
+
+    @Override
+    public MovieResponse updateMovie(String movieId, UpdateMovieRequest request, MultipartFile posterFile, MultipartFile trailerFile) {
+        Movie movie = movieRepository.findByIdWithRelationships(movieId)
             .orElseThrow(() -> new MovieNotFoundException("Movie not found with ID: " + movieId));
 
         // Update fields if provided
@@ -63,6 +100,30 @@ public class MovieServiceImpl implements MovieService {
         if (request.getBudget() != null) movie.setBudget(request.getBudget());
         if (request.getBoxOffice() != null) movie.setBoxOffice(request.getBoxOffice());
         if (request.getPosterUrl() != null) movie.setPosterUrl(request.getPosterUrl());
+
+        // Upload new poster if provided
+        if (posterFile != null && !posterFile.isEmpty()) {
+            try {
+                String posterUrl = fileStorageService.uploadFile(posterFile, "posters");
+                movie.setPosterUrl(posterUrl);
+                log.info("Uploaded new poster for movie '{}': {}", movie.getTitle(), posterUrl);
+            } catch (Exception e) {
+                log.error("Failed to upload poster for movie '{}'", movie.getTitle(), e);
+                // Continue without updating poster - non-critical failure
+            }
+        }
+
+        // Upload new trailer if provided
+        if (trailerFile != null && !trailerFile.isEmpty()) {
+            try {
+                String trailerUrl = fileStorageService.uploadFile(trailerFile, "trailers");
+                movie.setTrailerUrl(trailerUrl);
+                log.info("Uploaded new trailer for movie '{}': {}", movie.getTitle(), trailerUrl);
+            } catch (Exception e) {
+                log.error("Failed to upload trailer for movie '{}'", movie.getTitle(), e);
+                // Continue without updating trailer - non-critical failure
+            }
+        }
 
         Movie updatedMovie = movieRepository.save(movie);
         return updatedMovie.mapMovieToResponse();
@@ -80,7 +141,8 @@ public class MovieServiceImpl implements MovieService {
     public Optional<MovieResponse> findMovieById(String movieId) {
         log.debug("Finding movie by ID: {}", movieId);
         return movieRepository.findByIdWithRelationships(movieId)
-                .map(Movie::mapMovieToResponse);
+                .map(Movie::mapMovieToResponse)
+                .map(this::enrichWithPresignedUrls);
     }
 
     @Override
@@ -103,6 +165,7 @@ public class MovieServiceImpl implements MovieService {
 
         List<MovieResponse> movieResponses = movies.getContent().stream()
             .map(Movie::mapMovieToResponseLite)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
         return new PageImpl<>(movieResponses, pageable, movies.getTotalElements());
     }
@@ -183,6 +246,7 @@ public class MovieServiceImpl implements MovieService {
         // Map to lightweight response DTOs
         List<MovieResponse> movieResponses = movies.stream()
             .map(Movie::mapMovieToResponseLite)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
 
         log.debug("Mapped {} movies to response DTOs", movieResponses.size());
@@ -195,6 +259,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findByGenreName(genreName);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -203,6 +268,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findByDirectorName(directorName);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -211,6 +277,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findByActorName(actorName);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -219,6 +286,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findByReleaseYear(releaseYear);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -227,6 +295,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findByReleaseYearBetween(startYear, endYear);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -235,6 +304,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findTopRatedMovies(minRatings, limit);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -243,6 +313,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findMostPopularMovies(limit);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -251,6 +322,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findRecentMovies(fromYear, limit);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -259,6 +331,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findSimilarMovies(movieId, limit);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -267,6 +340,7 @@ public class MovieServiceImpl implements MovieService {
         List<Movie> movies = movieRepository.findRecommendedMoviesForUser(userId, minRating, limit);
         return movies.stream()
             .map(Movie::mapMovieToResponse)
+            .map(this::enrichWithPresignedUrls)
             .collect(Collectors.toList());
     }
 
@@ -287,7 +361,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public void updateMoviePosterUrl(String movieId, String posterUrl) {
-        Movie movie = movieRepository.findById(movieId)
+        Movie movie = movieRepository.findByIdWithRelationships(movieId)
             .orElseThrow(() -> new MovieNotFoundException("Movie not found with ID: " + movieId));
         movie.setPosterUrl(posterUrl);
         movieRepository.save(movie);
@@ -295,12 +369,52 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public void updateMovieTrailerUrl(String movieId, String trailerUrl) {
-        Movie movie = movieRepository.findById(movieId)
+        Movie movie = movieRepository.findByIdWithRelationships(movieId)
             .orElseThrow(() -> new MovieNotFoundException("Movie not found with ID: " + movieId));
         movie.setTrailerUrl(trailerUrl);
         movieRepository.save(movie);
     }
 
+    /**
+     * Enriches a MovieResponse with presigned URLs for poster and trailer.
+     * Converts object keys (e.g., "posters/abc123.jpg") to temporary presigned URLs.
+     * Only processes object keys (not full URLs) to avoid breaking existing URLs.
+     */
+    private MovieResponse enrichWithPresignedUrls(MovieResponse response) {
+        // Generate presigned URL for poster if object key exists
+        if (response.getPosterUrl() != null && !response.getPosterUrl().isEmpty()) {
+            String posterUrl = response.getPosterUrl();
+            // Only process if it's an object key (not already a full URL)
+            if (!posterUrl.startsWith("http://") && !posterUrl.startsWith("https://")) {
+                try {
+                    String presignedUrl = fileStorageService.getFileUrl(posterUrl);
+                    response.setPosterUrl(presignedUrl);
+                } catch (Exception e) {
+                    log.warn("Failed to generate presigned URL for poster: {}", posterUrl, e);
+                    // Keep the original object key if URL generation fails
+                }
+            }
+            // If it's already a full URL, leave it as-is
+        }
+
+        // Generate presigned URL for trailer if object key exists
+        if (response.getTrailerUrl() != null && !response.getTrailerUrl().isEmpty()) {
+            String trailerUrl = response.getTrailerUrl();
+            // Only process if it's an object key (not already a full URL)
+            if (!trailerUrl.startsWith("http://") && !trailerUrl.startsWith("https://")) {
+                try {
+                    String presignedUrl = fileStorageService.getFileUrl(trailerUrl);
+                    response.setTrailerUrl(presignedUrl);
+                } catch (Exception e) {
+                    log.warn("Failed to generate presigned URL for trailer: {}", trailerUrl, e);
+                    // Keep the original object key if URL generation fails
+                }
+            }
+            // If it's already a full URL, leave it as-is
+        }
+
+        return response;
+    }
 
     private record MovieStatsImpl(Long totalMovies, Long totalRatings,
                                       Double overallAverageRating) implements MovieStats {

@@ -16,6 +16,8 @@ spring:
               - "https://127.0.0.1:*"
               - "http://192.168.*.*:*"
               - "https://192.168.*.*:*"
+              - "https://space-css3.vercel.app"
+              - "https://*.vercel.app"
             allowedMethods:
               - GET
               - POST
@@ -163,6 +165,13 @@ spring:
   redis:
     host: ${REDIS_HOST:redis}
     port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
 
 eureka:
   client:

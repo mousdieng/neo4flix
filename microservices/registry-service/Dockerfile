@@ -1,31 +1,16 @@
-# Multi-stage build for Registry Service
-FROM maven:latest AS builder
+# Runtime image for Registry Service
+FROM eclipse-temurin:17-jre-alpine
 
 LABEL maintainer="Neo4flix Team"
 LABEL description="Registry Service for Neo4flix Microservices"
 
 WORKDIR /app
 
-# Copy Maven files
-COPY pom.xml .
-COPY src ./src
-
-# Build application
-RUN mvn clean package -DskipTests
-
-# Create final image
-FROM openjdk:17-jdk-slim
-
-WORKDIR /app
-
 # Install curl for healthcheck
-RUN apt-get update && \
-    apt-get install -y curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
-# Copy jar file from build stage
-COPY --from=builder /app/target/registry-service-*.jar app.jar
+# Copy pre-built JAR from local target folder
+COPY target/registry-service-*.jar app.jar
 
 # Expose port
 EXPOSE 8761

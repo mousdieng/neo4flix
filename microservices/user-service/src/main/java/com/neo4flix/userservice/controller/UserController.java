@@ -16,7 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -93,17 +92,17 @@ public class UserController {
 
     @Operation(summary = "Enable 2FA", description = "Enables two-factor authentication for the current user")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "2FA enabled successfully, QR code returned"),
+        @ApiResponse(responseCode = "200", description = "2FA enabled successfully, QR code and secret returned"),
         @ApiResponse(responseCode = "400", description = "2FA already enabled"),
         @ApiResponse(responseCode = "401", description = "User not authenticated")
     })
     @PostMapping("/me/enable-2fa")
-    public ResponseEntity<String> enableTwoFactor() {
+    public ResponseEntity<TwoFactorSetupResponse> enableTwoFactor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = (User) authentication.getPrincipal();
 
-        String qrCodeUri = userService.enableTwoFactor(currentUser.getId());
-        return ResponseEntity.ok(qrCodeUri);
+        TwoFactorSetupResponse response = userService.enableTwoFactor(currentUser.getId());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Disable 2FA", description = "Disables two-factor authentication for the current user")
@@ -258,16 +257,19 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
         }
 
-        // Upload file
-        String profilePictureUrl = fileStorageService.uploadFile(file, "avatars");
+        // Upload file - returns object key (e.g., "avatars/abc123.png")
+        String objectKey = fileStorageService.uploadFile(file, "avatars");
 
-        // Update user with profile picture URL
-        userService.updateUserProfilePictureUrl(currentUser.getId(), profilePictureUrl);
+        // Update user with object key (NOT presigned URL)
+        userService.updateUserProfilePictureUrl(currentUser.getId(), objectKey);
+
+        // Generate a fresh presigned URL to return to the client
+        String presignedUrl = fileStorageService.getFileUrl(objectKey);
 
         return ResponseEntity.ok(Map.of(
             "success", "true",
             "message", "Profile picture uploaded successfully",
-            "profilePictureUrl", profilePictureUrl
+            "profilePictureUrl", presignedUrl
         ));
     }
 
@@ -284,6 +286,10 @@ public class UserController {
         User currentUser = (User) authentication.getPrincipal();
 
         List<FriendResponse> friends = userService.getFriends(currentUser.getId());
+        System.out.println("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj");
+        System.out.println(friends);
+        System.out.println("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj");
+
         return ResponseEntity.ok(friends);
     }
 

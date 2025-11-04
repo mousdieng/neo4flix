@@ -1,29 +1,18 @@
-# Multi-stage build for Neo4flix User Service
-FROM maven:latest AS build
+# Runtime image for Neo4flix User Service
+FROM eclipse-temurin:17-jre-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy pom.xml and download dependencies
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-# Copy source code and build
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-# Runtime stage
-FROM openjdk:17-jdk-slim
-
-# Set working directory
-WORKDIR /app
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Create user for security
-RUN addgroup --system --gid 1001 neo4flix && \
-    adduser --system --uid 1001 --gid 1001 neo4flix
+RUN addgroup -g 1001 -S neo4flix && \
+    adduser -u 1001 -S neo4flix -G neo4flix
 
-# Copy built JAR from build stage
-COPY --from=build /app/target/*.jar app.jar
+# Copy pre-built JAR from local target folder
+COPY target/*.jar app.jar
 
 # Change ownership
 RUN chown -R neo4flix:neo4flix /app

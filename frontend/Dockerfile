@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
@@ -12,8 +12,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application for production
-RUN npm run build
+# Build the application for development (connects to Docker gateway on localhost:9080)
+# This builds with environment.ts instead of environment.prod.ts
+RUN npm run build -- --configuration=development
 
 # Production stage
 FROM nginx:alpine

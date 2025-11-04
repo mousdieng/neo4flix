@@ -1,4 +1,6 @@
-.PHONY: help install build run stop clean logs status restart run-infra run-services run-frontend run-all
+.PHONY: help install build run stop clean logs status restart run-infra run-services run-frontend run-all \
+	docker-build docker-up docker-down docker-restart docker-logs \
+	build-jars build-images build-docker-all docker-clean
 
 # Colors for output
 CYAN := \033[0;36m
@@ -14,6 +16,7 @@ MOVIE_DIR := microservices/movie-service
 USER_DIR := microservices/user-service
 RATING_DIR := microservices/rating-service
 RECOMMENDATION_DIR := microservices/recommendation-service
+WATCHLIST_DIR := microservices/watchlist-service
 FRONTEND_DIR := frontend
 
 # Maven command
@@ -42,6 +45,7 @@ install: ## Install dependencies for all services
 	@cd $(USER_DIR) && $(MVN) clean install -DskipTests
 	@cd $(RATING_DIR) && $(MVN) clean install -DskipTests
 	@cd $(RECOMMENDATION_DIR) && $(MVN) clean install -DskipTests
+	@cd $(WATCHLIST_DIR) && $(MVN) clean install -DskipTests
 	@echo "$(YELLOW)Installing npm dependencies for frontend...$(NC)"
 	@cd $(FRONTEND_DIR) && npm install
 	@echo "$(GREEN)All dependencies installed successfully!$(NC)"
@@ -54,6 +58,7 @@ build: ## Build all services
 	@cd $(USER_DIR) && $(MVN) package -DskipTests &
 	@cd $(RATING_DIR) && $(MVN) package -DskipTests &
 	@cd $(RECOMMENDATION_DIR) && $(MVN) package -DskipTests &
+	@cd $(WATCHLIST_DIR) && $(MVN) package -DskipTests &
 	@wait
 	@echo "$(GREEN)All services built successfully!$(NC)"
 
@@ -148,6 +153,7 @@ clean: stop ## Stop services and clean build artifacts
 	@cd $(USER_DIR) && $(MVN) clean || true
 	@cd $(RATING_DIR) && $(MVN) clean || true
 	@cd $(RECOMMENDATION_DIR) && $(MVN) clean || true
+	@cd $(WATCHLIST_DIR) && $(MVN) clean || true
 	@rm -rf logs
 	@echo "$(GREEN)Clean complete!$(NC)"
 
@@ -197,3 +203,67 @@ restart: stop run ## Restart all services
 dev: ## Start infrastructure and run services in development mode
 	@$(MAKE) run-infra
 	@echo "$(YELLOW)Infrastructure started. You can now run services individually with 'make run-<service>'$(NC)"
+
+# ============================================================================
+# Docker Workflow Targets (Optimized for Fast Builds)
+# ============================================================================
+
+build-jars: ## Build all Maven JARs in parallel (fast!)
+	@echo "$(CYAN)Building all Maven JARs in parallel...$(NC)"
+	@cd $(REGISTRY_DIR) && $(MVN) clean package -DskipTests & \
+	cd $(GATEWAY_DIR) && $(MVN) clean package -DskipTests & \
+	cd $(MOVIE_DIR) && $(MVN) clean package -DskipTests & \
+	cd $(USER_DIR) && $(MVN) clean package -DskipTests & \
+	cd $(RATING_DIR) && $(MVN) clean package -DskipTests & \
+	cd $(RECOMMENDATION_DIR) && $(MVN) clean package -DskipTests & \
+	cd $(WATCHLIST_DIR) && $(MVN) clean package -DskipTests & \
+	wait
+	@echo "$(GREEN)All JARs built successfully!$(NC)"
+
+build-images: ## Build all Docker images (requires JARs to be built first)
+	@echo "$(CYAN)Building Docker images...$(NC)"
+	@docker-compose build
+	@echo "$(GREEN)All Docker images built successfully!$(NC)"
+
+build-docker-all: build-jars build-images ## Build JARs and Docker images (complete build)
+	@echo "$(GREEN)Complete build finished!$(NC)"
+
+docker-up: ## Start all services with docker-compose
+	@echo "$(CYAN)Starting all services with docker-compose...$(NC)"
+	@docker-compose up -d
+	@echo "$(GREEN)All services started!$(NC)"
+	@$(MAKE) docker-status
+
+docker-down: ## Stop and remove all docker-compose services
+	@echo "$(CYAN)Stopping docker-compose services...$(NC)"
+	@docker-compose down
+	@echo "$(GREEN)All services stopped!$(NC)"
+
+docker-restart: docker-down docker-up ## Restart all docker-compose services
+
+docker-logs: ## Tail logs from all docker-compose services
+	@docker-compose logs -f
+
+docker-logs-service: ## Tail logs from a specific service (usage: make docker-logs-service SERVICE=user-service)
+	@docker-compose logs -f $(SERVICE)
+
+docker-status: ## Show status of all docker-compose services
+	@echo "$(CYAN)Docker Service Status:$(NC)"
+	@docker-compose ps
+
+docker-clean: docker-down ## Stop services and remove volumes
+	@echo "$(CYAN)Cleaning Docker volumes...$(NC)"
+	@docker-compose down -v
+	@echo "$(GREEN)Docker cleanup complete!$(NC)"
+
+docker-rebuild: ## Rebuild and restart specific service (usage: make docker-rebuild SERVICE=user-service)
+	@echo "$(CYAN)Rebuilding $(SERVICE)...$(NC)"
+	@docker-compose up -d --build $(SERVICE)
+	@echo "$(GREEN)$(SERVICE) rebuilt and restarted!$(NC)"
+
+# Quick development workflow
+quick-deploy: build-docker-all docker-up ## Build everything and deploy (one command!)
+	@echo "$(GREEN)Deployment complete! Services are starting up...$(NC)"
+	@echo "$(YELLOW)Gateway will be available at http://localhost:8080$(NC)"
+	@echo "$(YELLOW)Frontend will be available at http://localhost:4200$(NC)"
+	@echo "$(YELLOW)Neo4j Browser: http://localhost:7474$(NC)"

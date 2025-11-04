@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: registry-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
 eureka:
   instance:
@@ -17,6 +19,23 @@ eureka:
   server:
     enable-self-preservation: false
     eviction-interval-timer-in-ms: 30000
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+eureka:
+  instance:
+    hostname: registry-service
+    prefer-ip-address: true
+    ip-address: registry-service
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://registry-service:8761/eureka/
 
 management:
   endpoints:

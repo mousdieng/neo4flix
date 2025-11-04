@@ -10,12 +10,14 @@ export interface User {
   firstName: string;
   lastName: string;
   role: string;
+  profilePictureUrl?: string;
   preferences?: any;
 }
 
 export interface LoginRequest {
   usernameOrEmail: string;
   password: string;
+  twoFactorCode?: string;
 }
 
 export interface RegisterRequest {
@@ -44,6 +46,7 @@ export class Auth {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private tokenKey = 'neo4flix_token';
   private refreshTokenKey = 'neo4flix_refresh_token';
+  private userKey = 'neo4flix_user';
 
   public currentUser$ = this.currentUserSubject.asObservable();
   public isAuthenticated = signal(false);
@@ -54,12 +57,36 @@ export class Auth {
 
   private loadUserFromStorage(): void {
     const token = localStorage.getItem(this.tokenKey);
-    if (token && this.isTokenValid(token)) {
-      const userData = this.extractUserFromToken(token);
-      if (userData) {
+    const userJson = localStorage.getItem(this.userKey);
+
+    if (token && this.isTokenValid(token) && userJson) {
+      try {
+        const userData = JSON.parse(userJson);
         this.currentUserSubject.next(userData);
         this.isAuthenticated.set(true);
+      } catch {
+        // If parsing fails, fall back to extracting from token
+        const userData = this.extractUserFromToken(token);
+        if (userData) {
+          this.currentUserSubject.next(userData);
+          this.isAuthenticated.set(true);
+        }
       }
+    }
+  }
+
+  initializeUserProfile(): void {
+    // Fetch fresh user data from API to get updated profile picture URL
+    // This should be called after the app has fully initialized to avoid circular dependencies
+    if (this.isAuthenticated()) {
+      this.fetchCurrentUserProfile().subscribe({
+        next: () => {
+          // User data updated successfully
+        },
+        error: () => {
+          // Keep using cached data if API call fails
+        }
+      });
     }
   }
 
@@ -81,7 +108,8 @@ export class Auth {
         email: payload.email,
         firstName: payload.firstName,
         lastName: payload.lastName,
-        role: payload.role
+        role: payload.role,
+        profilePictureUrl: payload.profilePictureUrl
       };
     } catch {
       return null;
@@ -122,6 +150,7 @@ export class Auth {
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.refreshTokenKey);
+    localStorage.removeItem(this.userKey);
     this.currentUserSubject.next(null);
     this.isAuthenticated.set(false);
   }
@@ -129,6 +158,7 @@ export class Auth {
   private setAuthData(token: string, refreshToken: string, user: User): void {
     localStorage.setItem(this.tokenKey, token);
     localStorage.setItem(this.refreshTokenKey, refreshToken);
+    localStorage.setItem(this.userKey, JSON.stringify(user));
     this.currentUserSubject.next(user);
     this.isAuthenticated.set(true);
   }
@@ -139,6 +169,24 @@ export class Auth {
 
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
+  }
+
+  fetchCurrentUserProfile(): Observable<User> {
+    return this.http.get<User>(`${environment.apiUrl}/users/me`)
+      .pipe(
+        tap(user => {
+          // Update the stored user data with fresh profile picture URL
+          const currentToken = this.getToken();
+          const currentRefreshToken = localStorage.getItem(this.refreshTokenKey);
+          if (currentToken && currentRefreshToken) {
+            this.setAuthData(currentToken, currentRefreshToken, user);
+          }
+        }),
+        catchError(error => {
+          console.error('Error fetching current user profile:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   refreshToken(): Observable<AuthResponse> {

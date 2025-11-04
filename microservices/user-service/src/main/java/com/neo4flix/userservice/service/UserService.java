@@ -42,6 +42,7 @@ public class UserService {
     private final JwtService jwtService;
     private final TwoFactorService twoFactorService;
     private final AuthenticationManager authenticationManager;
+    private final FileStorageService fileStorageService;
 
     @Autowired
     public UserService(
@@ -50,7 +51,8 @@ public class UserService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             TwoFactorService twoFactorService,
-            AuthenticationManager authenticationManager
+            AuthenticationManager authenticationManager,
+            FileStorageService fileStorageService
     ) {
         this.userRepository = userRepository;
         this.friendRequestRepository = friendRequestRepository;
@@ -58,6 +60,7 @@ public class UserService {
         this.jwtService = jwtService;
         this.twoFactorService = twoFactorService;
         this.authenticationManager = authenticationManager;
+        this.fileStorageService = fileStorageService;
     }
 
     /**
@@ -131,9 +134,8 @@ public class UserService {
                 }
             }
 
-            // Update last login time
-            user.updateLastLogin();
-            userRepository.save(user);
+            // Update last login time using targeted query to avoid overwriting relationships
+            userRepository.updateLastLogin(user.getId(), LocalDateTime.now());
 
             // Generate JWT tokens
             String accessToken = jwtService.generateTokenWithUserInfo(user, user.getId(), user.getRole().name());
@@ -243,7 +245,7 @@ public class UserService {
     /**
      * Enable 2FA for user
      */
-    public String enableTwoFactor(String userId) {
+    public TwoFactorSetupResponse enableTwoFactor(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
 
@@ -258,7 +260,9 @@ public class UserService {
         user.updateTimestamp();
         userRepository.save(user);
 
-        return twoFactorService.generateQrCodeImageUri(secret, user.getUsername());
+        String qrCode = twoFactorService.generateQrCodeImageUri(secret, user.getUsername());
+
+        return new TwoFactorSetupResponse(qrCode, secret);
     }
 
     /**
@@ -394,13 +398,23 @@ public class UserService {
     // ==================== FRIEND MANAGEMENT ====================
 
     /**
-     * Get user's friends list
+     * Get user's friends list with fresh presigned URLs for profile pictures
      */
     @Transactional(readOnly = true)
     public List<FriendResponse> getFriends(String userId) {
-        return friendRequestRepository.findAllFriends(userId);
-    }
+        List<FriendResponse> friends = friendRequestRepository.findAllFriends(userId);
 
+        // Generate fresh presigned URLs for each friend's profile picture
+        friends.forEach(friend -> {
+            String objectKey = friend.getProfilePictureUrl();
+            if (objectKey != null && !objectKey.isEmpty()) {
+                String presignedUrl = fileStorageService.getFileUrl(objectKey);
+                friend.setProfilePictureUrl(presignedUrl);
+            }
+        });
+
+        return friends;
+    }
 
     /**
      * Add a friend (now sends a friend request instead)
@@ -444,6 +458,7 @@ public class UserService {
 
     /**
      * Convert User entity to UserResponse DTO
+     * Generates fresh presigned URLs for profile pictures on-the-fly
      */
     private UserResponse convertToUserResponse(User user) {
         UserResponse response = new UserResponse();
@@ -454,7 +469,17 @@ public class UserService {
         response.setLastName(user.getLastName());
         response.setFullName(user.getFullName());
         response.setDateOfBirth(user.getDateOfBirth());
-        response.setProfilePictureUrl(user.getProfilePictureUrl());
+
+        // Generate fresh presigned URL from object key stored in database
+        // This ensures URLs are always valid (15 min expiry)
+        String objectKey = user.getProfilePictureUrl();
+        if (objectKey != null && !objectKey.isEmpty()) {
+            String presignedUrl = fileStorageService.getFileUrl(objectKey);
+            response.setProfilePictureUrl(presignedUrl);
+        } else {
+            response.setProfilePictureUrl(null);
+        }
+
         response.setBio(user.getBio());
         response.setEnabled(user.isEnabled());
         response.setEmailVerified(user.isEmailVerified());
@@ -483,6 +508,7 @@ public class UserService {
             throw new IllegalStateException("Users are already friends");
         }
 
+        // Check for any existing friend request status
         Map<String, String> statusMessages = Map.of(
                 "PENDING", "A pending friend request already exists between these users",
                 "ACCEPTED", "You are already friends with this user",
@@ -531,13 +557,10 @@ public class UserService {
         request.setRespondedAt(LocalDateTime.now());
         friendRequestRepository.save(request);
 
-        // Add bidirectional friendship
-        User sender = request.getSender();
-        User receiver = request.getReceiver();
-        sender.getFriends().add(receiver);
-        receiver.getFriends().add(sender);
-        userRepository.save(sender);
-        userRepository.save(receiver);
+        // Create bidirectional friendship using direct Cypher query
+        String senderId = request.getSender().getId();
+        String receiverId = request.getReceiver().getId();
+        userRepository.createFriendship(senderId, receiverId);
     }
 
     /**
