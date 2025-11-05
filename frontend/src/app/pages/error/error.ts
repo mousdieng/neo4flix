@@ -60,6 +60,6 @@ export class Error implements OnInit {
       timestamp: new Date().toISOString(),
       url: window.location.href
     });
-    alert('Error report sent. Thank you for helping us improve!');
+    console.error('Error report sent. Thank you for helping us improve!');
   }
 }

@@ -129,7 +129,7 @@ public class GatewayConfig {
                                         .setName("recommendation-service-cb")
                                         .setFallbackUri("forward:/fallback/recommendation-service"))
                                 .retry(retryConfig -> retryConfig.setRetries(3)))
-                        .uri("http://localhost:9083"))
+                        .uri("lb://recommandation-service"))
 
                 .route("recommendation-service-auth", r -> r
                         .path("/api/v1/recommendations/**")
@@ -140,7 +140,7 @@ public class GatewayConfig {
                                         .setName("recommendation-service-cb")
                                         .setFallbackUri("forward:/fallback/recommendation-service"))
                                 .retry(retryConfig -> retryConfig.setRetries(3)))
-                        .uri("http://localhost:9083"))
+                        .uri("lb://recommandation-service"))
 
                 // Watchlist Service Routes - ALL require authentication
                 .route("watchlist-service-auth", r -> r

@@ -1,17 +1,17 @@
 services:
 #   Registry Service (Eureka Server)
-  registry-service:
-    build:
-      context: ./microservices/registry-service
-      dockerfile: Dockerfile
-    container_name: neo4flix-registry
-    restart: unless-stopped
-    ports:
-      - "8761:8761"
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    networks:
-      - neo4flix-network
+#  registry-service:
+#    build:
+#      context: ./microservices/registry-service
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-registry
+#    restart: unless-stopped
+#    ports:
+#      - "8761:8761"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - neo4flix-network
 
   # Redis Cache
   redis:
@@ -63,204 +63,204 @@ services:
       start_period: 40s
 
   # MinIO Object Storage
-  minio:
-    image: minio/minio:latest
-    container_name: neo4flix-minio
-    restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    networks:
-      - neo4flix-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-
-
-  # Movie Microservice
-  movie-service:
-    build:
-      context: ./microservices/movie-service
-      dockerfile: Dockerfile
-    container_name: neo4flix-movie-service
-    restart: unless-stopped
-    ports:
-      - "9081:9081"
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      registry-service:
-        condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USERNAME=neo4j
-      - NEO4J_PASSWORD=password
-      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
-      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
-    networks:
-      - neo4flix-network
-
-  # User Microservice
-  user-service:
-    build:
-      context: ./microservices/user-service
-      dockerfile: Dockerfile
-    container_name: neo4flix-user-service
-    restart: unless-stopped
-    ports:
-      - "9084:9084"
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      registry-service:
-        condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USERNAME=neo4j
-      - NEO4J_PASSWORD=password
-      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
-      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
-    networks:
-      - neo4flix-network
-
-  # Rating Microservice
-  rating-service:
-    build:
-      context: ./microservices/rating-service
-      dockerfile: Dockerfile
-    container_name: neo4flix-rating-service
-    restart: unless-stopped
-    ports:
-      - "9082:9082"
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      registry-service:
-        condition: service_started
-      recommendation-service:
-        condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USERNAME=neo4j
-      - NEO4J_PASSWORD=password
-      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
-      - RECOMMENDATION_SERVICE_URL=http://recommendation-service:9083
-      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
-    networks:
-      - neo4flix-network
-
-  # Recommendation Microservice
-  recommendation-service:
-    build:
-      context: ./microservices/recommendation-service
-      dockerfile: Dockerfile
-    container_name: neo4flix-recommendation-service
-    restart: unless-stopped
-    ports:
-      - "9083:9083"
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      registry-service:
-        condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USERNAME=neo4j
-      - NEO4J_PASSWORD=password
-      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
-      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
-    networks:
-      - neo4flix-network
-
-  # Watchlist Microservice
-  watchlist-service:
-    build:
-      context: ./microservices/watchlist-service
-      dockerfile: Dockerfile
-    container_name: neo4flix-watchlist-service
-    restart: unless-stopped
-    ports:
-      - "9085:9085"
-    depends_on:
-      neo4j:
-        condition: service_healthy
-      registry-service:
-        condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USERNAME=neo4j
-      - NEO4J_PASSWORD=password
-      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
-      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
-    networks:
-      - neo4flix-network
-
-  # Gateway Service (API Gateway)
-  gateway-service:
-    build:
-      context: ./microservices/gateway-service
-      dockerfile: Dockerfile
-    container_name: neo4flix-gateway
-    restart: unless-stopped
-    ports:
-      - "9080:9080"
-    depends_on:
-      redis:
-        condition: service_healthy
-      registry-service:
-        condition: service_started
-      movie-service:
-        condition: service_started
-      user-service:
-        condition: service_started
-      rating-service:
-        condition: service_started
-      recommendation-service:
-        condition: service_started
-      watchlist-service:
-        condition: service_started
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - MOVIE_SERVICE_URL=http://movie-service:9081
-      - USER_SERVICE_URL=http://user-service:9084
-      - RATING_SERVICE_URL=http://rating-service:9082
-      - RECOMMENDATION_SERVICE_URL=http://recommendation-service:9083
-      - WATCHLIST_SERVICE_URL=http://watchlist-service:9085
-      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
-      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
-    networks:
-      - neo4flix-network
-
-  # Angular Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: neo4flix-frontend
-    restart: unless-stopped
-    ports:
-      - "4200:80"
-    depends_on:
-      - gateway-service
-    environment:
-      - API_BASE_URL=http://localhost:8080
-    networks:
-      - neo4flix-network
+#  minio:
+#    image: minio/minio:latest
+#    container_name: neo4flix-minio
+#    restart: unless-stopped
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
+#    environment:
+#      MINIO_ROOT_USER: minioadmin
+#      MINIO_ROOT_PASSWORD: minioadmin123
+#    command: server /data --console-address ":9001"
+#    volumes:
+#      - minio_data:/data
+#    networks:
+#      - neo4flix-network
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+#      interval: 30s
+#      timeout: 20s
+#      retries: 3
+#
+#
+#  # Movie Microservice
+#  movie-service:
+#    build:
+#      context: ./microservices/movie-service
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-movie-service
+#    restart: unless-stopped
+#    ports:
+#      - "9081:9081"
+#    depends_on:
+#      neo4j:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_started
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - NEO4J_URI=bolt://neo4j:7687
+#      - NEO4J_USERNAME=neo4j
+#      - NEO4J_PASSWORD=password
+#      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    networks:
+#      - neo4flix-network
+#
+#  # User Microservice
+#  user-service:
+#    build:
+#      context: ./microservices/user-service
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-user-service
+#    restart: unless-stopped
+#    ports:
+#      - "9084:9084"
+#    depends_on:
+#      neo4j:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_started
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - NEO4J_URI=bolt://neo4j:7687
+#      - NEO4J_USERNAME=neo4j
+#      - NEO4J_PASSWORD=password
+#      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    networks:
+#      - neo4flix-network
+#
+#  # Rating Microservice
+#  rating-service:
+#    build:
+#      context: ./microservices/rating-service
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-rating-service
+#    restart: unless-stopped
+#    ports:
+#      - "9082:9082"
+#    depends_on:
+#      neo4j:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_started
+#      recommendation-service:
+#        condition: service_started
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - NEO4J_URI=bolt://neo4j:7687
+#      - NEO4J_USERNAME=neo4j
+#      - NEO4J_PASSWORD=password
+#      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
+#      - RECOMMENDATION_SERVICE_URL=http://recommendation-service:9083
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    networks:
+#      - neo4flix-network
+#
+#  # Recommendation Microservice
+#  recommendation-service:
+#    build:
+#      context: ./microservices/recommendation-service
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-recommendation-service
+#    restart: unless-stopped
+#    ports:
+#      - "9083:9083"
+#    depends_on:
+#      neo4j:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_started
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - NEO4J_URI=bolt://neo4j:7687
+#      - NEO4J_USERNAME=neo4j
+#      - NEO4J_PASSWORD=password
+#      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    networks:
+#      - neo4flix-network
+#
+#  # Watchlist Microservice
+#  watchlist-service:
+#    build:
+#      context: ./microservices/watchlist-service
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-watchlist-service
+#    restart: unless-stopped
+#    ports:
+#      - "9085:9085"
+#    depends_on:
+#      neo4j:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_started
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - NEO4J_URI=bolt://neo4j:7687
+#      - NEO4J_USERNAME=neo4j
+#      - NEO4J_PASSWORD=password
+#      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    networks:
+#      - neo4flix-network
+#
+#  # Gateway Service (API Gateway)
+#  gateway-service:
+#    build:
+#      context: ./microservices/gateway-service
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-gateway
+#    restart: unless-stopped
+#    ports:
+#      - "9080:9080"
+#    depends_on:
+#      redis:
+#        condition: service_healthy
+#      registry-service:
+#        condition: service_started
+#      movie-service:
+#        condition: service_started
+#      user-service:
+#        condition: service_started
+#      rating-service:
+#        condition: service_started
+#      recommendation-service:
+#        condition: service_started
+#      watchlist-service:
+#        condition: service_started
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#      - MOVIE_SERVICE_URL=http://movie-service:9081
+#      - USER_SERVICE_URL=http://user-service:9084
+#      - RATING_SERVICE_URL=http://rating-service:9082
+#      - RECOMMENDATION_SERVICE_URL=http://recommendation-service:9083
+#      - WATCHLIST_SERVICE_URL=http://watchlist-service:9085
+#      - JWT_SECRET=mySecretKeyForJWTTokenGeneration2024
+#      - EUREKA_SERVER_URL=http://registry-service:8761/eureka/
+#    networks:
+#      - neo4flix-network
+#
+#  # Angular Frontend
+#  frontend:
+#    build:
+#      context: ./frontend
+#      dockerfile: Dockerfile
+#    container_name: neo4flix-frontend
+#    restart: unless-stopped
+#    ports:
+#      - "4200:80"
+#    depends_on:
+#      - gateway-service
+#    environment:
+#      - API_BASE_URL=http://localhost:8080
+#    networks:
+#      - neo4flix-network
 
 volumes:
   neo4j_data:

@@ -43,8 +43,11 @@ export class Home implements OnInit {
   }
 
   private loadPersonalizedContent(): void {
+    // Randomize which page to load from for variety on each visit
+    const randomPage = Math.floor(Math.random() * 3); // Random page 0-2
+
     // For now, use popular movies instead of personalized (until recommendation endpoints are implemented)
-    this.movieService.getPopularMovies(0, 8).subscribe({
+    this.movieService.getPopularMovies(randomPage, 8).subscribe({
       next: (response) => {
         if (response.success) {
           this.featuredMovies.set(response.data.movies);
@@ -54,7 +57,7 @@ export class Home implements OnInit {
     });
 
     // Load recent movies as "trending"
-    this.movieService.getRecentMovies(0, 6).subscribe({
+    this.movieService.getRecentMovies(randomPage, 6).subscribe({
       next: (response) => {
         if (response.success) {
           this.trendingMovies.set(response.data.movies);
@@ -64,7 +67,7 @@ export class Home implements OnInit {
     });
 
     // Load top-rated movies
-    this.movieService.getTopRatedMovies(0, 6).subscribe({
+    this.movieService.getTopRatedMovies(randomPage, 6).subscribe({
       next: (response) => {
         if (response.success) {
           this.topRatedMovies.set(response.data.movies);
@@ -79,8 +82,11 @@ export class Home implements OnInit {
   }
 
   private loadGuestContent(): void {
+    // Randomize which page to load from for variety on each visit
+    const randomPage = Math.floor(Math.random() * 3); // Random page 0-2
+
     // Load popular movies for guest users
-    this.movieService.getPopularMovies(0, 8).subscribe({
+    this.movieService.getPopularMovies(randomPage, 8).subscribe({
       next: (response) => {
         if (response.success) {
           this.featuredMovies.set(response.data.movies);
@@ -90,7 +96,7 @@ export class Home implements OnInit {
     });
 
     // Load recent movies
-    this.movieService.getRecentMovies(0, 6).subscribe({
+    this.movieService.getRecentMovies(randomPage, 6).subscribe({
       next: (response) => {
         if (response.success) {
           this.trendingMovies.set(response.data.movies);
@@ -100,7 +106,7 @@ export class Home implements OnInit {
     });
 
     // Load top-rated movies
-    this.movieService.getTopRatedMovies(0, 6).subscribe({
+    this.movieService.getTopRatedMovies(randomPage, 6).subscribe({
       next: (response) => {
         if (response.success) {
           this.topRatedMovies.set(response.data.movies);

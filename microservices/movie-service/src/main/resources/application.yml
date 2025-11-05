@@ -31,6 +31,7 @@ jwt:
 
 # MinIO Configuration
 minio:
+  enabled: ${MINIO_ENABLED:false}
   url: ${MINIO_URL:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin123}
@@ -71,6 +72,7 @@ spring:
     uri: ${NEO4J_URI:bolt://neo4j:7687}
 
 minio:
+  enabled: ${MINIO_ENABLED:true}
   url: ${MINIO_URL:http://minio:9000}
 
 server:

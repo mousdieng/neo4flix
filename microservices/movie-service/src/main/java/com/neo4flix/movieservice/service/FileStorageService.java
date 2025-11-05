@@ -3,8 +3,8 @@ package com.neo4flix.movieservice.service;
 import com.neo4flix.movieservice.config.MinioProperties;
 import io.minio.*;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,11 +14,18 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FileStorageService {
 
     private final MinioClient minioClient;
     private final MinioProperties minioProperties;
+
+    public FileStorageService(MinioProperties minioProperties, @Autowired(required = false) MinioClient minioClient) {
+        this.minioProperties = minioProperties;
+        this.minioClient = minioClient;
+        if (minioClient == null) {
+            log.warn("MinIO client is not available. File storage operations will be disabled.");
+        }
+    }
 
     /**
      * Upload a file to MinIO
@@ -28,6 +35,11 @@ public class FileStorageService {
      * @return The object key (path) of the uploaded file (e.g., "posters/uuid.png")
      */
     public String uploadFile(MultipartFile file, String folder) {
+        if (minioClient == null) {
+            log.warn("MinIO client is not available. File upload skipped.");
+            throw new RuntimeException("File storage service is not available");
+        }
+
         try {
             // Validate file
             if (file.isEmpty()) {
@@ -72,6 +84,11 @@ public class FileStorageService {
      * @return A presigned URL valid for 7 days
      */
     public String getFileUrl(String filename) {
+        if (minioClient == null) {
+            log.warn("MinIO client is not available. Cannot generate file URL.");
+            return null;
+        }
+
         try {
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
@@ -93,6 +110,11 @@ public class FileStorageService {
      * @param fileUrlOrKey The URL or object key of the file to delete
      */
     public void deleteFile(String fileUrlOrKey) {
+        if (minioClient == null) {
+            log.warn("MinIO client is not available. File deletion skipped.");
+            return;
+        }
+
         try {
             String filename;
 
@@ -153,6 +175,11 @@ public class FileStorageService {
      * @return true if the file exists, false otherwise
      */
     public boolean fileExists(String filename) {
+        if (minioClient == null) {
+            log.warn("MinIO client is not available. Cannot check file existence.");
+            return false;
+        }
+
         try {
             minioClient.statObject(
                     StatObjectArgs.builder()

@@ -32,7 +32,7 @@ export class App implements OnInit {
   public watchlistCount = computed(() => this.watchlistService.watchlistCount());
   public isAdmin = computed(() => {
     const user = this.currentUser();
-    console.log("hhhhhh", user)
+    console.log("gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")
     return user?.role === 'ADMIN';
   });
 
@@ -42,10 +42,15 @@ export class App implements OnInit {
     // Initialize user profile to fetch fresh profile picture URL
     this.authService.initializeUserProfile();
 
-    // TODO: Load watchlist count if user is authenticated (once watchlist service is implemented)
-    // if (this.isAuthenticated()) {
-    //   this.watchlistService.getWatchlist().subscribe();
-    // }
+    // Load watchlist count if user is authenticated
+    if (this.isAuthenticated()) {
+      this.watchlistService.getWatchlist({ page: 0, pageSize: 1 }).subscribe({
+        error: () => {
+          // Silently fail - user might not have any watchlist items yet
+          this.watchlistService.watchlistCount.set(0);
+        }
+      });
+    }
 
     // Close user menu when clicking outside
     document.addEventListener('click', (event) => {

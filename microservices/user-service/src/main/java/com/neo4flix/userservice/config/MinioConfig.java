@@ -5,6 +5,7 @@ import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,6 +17,7 @@ public class MinioConfig {
     private final MinioProperties minioProperties;
 
     @Bean
+    @ConditionalOnProperty(name = "minio.enabled", havingValue = "true", matchIfMissing = true)
     public MinioClient minioClient() {
         try {
             MinioClient minioClient = MinioClient.builder()
@@ -43,8 +45,8 @@ public class MinioConfig {
 
             return minioClient;
         } catch (Exception e) {
-            log.error("Error initializing MinIO client", e);
-            throw new RuntimeException("Failed to initialize MinIO client", e);
+            log.warn("MinIO is not available. File storage functionality will be disabled. Error: {}", e.getMessage());
+            return null;
         }
     }
 }

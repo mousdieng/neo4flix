@@ -114,7 +114,15 @@ export class MovieDetail implements OnInit, OnDestroy {
       });
 
       // Check if movie is in watchlist
-      this.isInWatchlist.set(this.watchlistService.isInWatchlist(movieId));
+      this.watchlistService.checkInWatchlist(movieId).subscribe({
+        next: (response) => {
+          this.isInWatchlist.set(response.inWatchlist);
+        },
+        error: (error) => {
+          // Silently fail - not critical
+          this.isInWatchlist.set(false);
+        }
+      });
     }
 
     this.isLoading.set(false);

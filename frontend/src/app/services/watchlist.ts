@@ -1,8 +1,9 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap, catchError, throwError } from 'rxjs';
 import { Movie } from './movie';
 import { environment } from '../../environments/environment';
+import { AlertService } from './alert.service';
 
 export interface WatchlistItem {
   id: string;
@@ -80,6 +81,8 @@ export class WatchlistService {
   public stats$ = this.statsSubject.asObservable();
   public watchlistCount = signal(0);
 
+  private alertService = inject(AlertService);
+
   constructor(private http: HttpClient) {}
 
   /**
@@ -112,7 +115,7 @@ export class WatchlistService {
           this.watchlistCount.set(response.totalItems);
         }),
         catchError(error => {
-          console.error('Error loading watchlist:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to load watchlist');
           return throwError(() => error);
         })
       );
@@ -128,7 +131,7 @@ export class WatchlistService {
           this.statsSubject.next(stats);
         }),
         catchError(error => {
-          console.error('Error loading watchlist stats:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to load watchlist stats');
           return throwError(() => error);
         })
       );
@@ -146,7 +149,7 @@ export class WatchlistService {
           this.watchlistCount.set(this.watchlistCount() + 1);
         }),
         catchError(error => {
-          console.error('Error adding to watchlist:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to add to watchlist');
           return throwError(() => error);
         })
       );
@@ -165,7 +168,7 @@ export class WatchlistService {
           this.watchlistCount.set(this.watchlistCount() - 1);
         }),
         catchError(error => {
-          console.error('Error removing from watchlist:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to remove from watchlist');
           return throwError(() => error);
         })
       );
@@ -186,7 +189,7 @@ export class WatchlistService {
           }
         }),
         catchError(error => {
-          console.error('Error updating watchlist entry:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to update watchlist entry');
           return throwError(() => error);
         })
       );
@@ -209,7 +212,7 @@ export class WatchlistService {
           }
         }),
         catchError(error => {
-          console.error('Error marking as watched:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to mark as watched');
           return throwError(() => error);
         })
       );
@@ -222,7 +225,7 @@ export class WatchlistService {
     return this.http.get<WatchlistCheckResponse>(`${this.apiUrl}/movies/${movieId}/check`)
       .pipe(
         catchError(error => {
-          console.error('Error checking watchlist:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to check watchlist');
           return throwError(() => error);
         })
       );
@@ -248,7 +251,7 @@ export class WatchlistService {
           this.watchlistCount.set(updatedWatchlist.length);
         }),
         catchError(error => {
-          console.error('Error clearing watched movies:', error);
+          this.alertService.error(error.error?.message || error.message || 'Failed to clear watched movies');
           return throwError(() => error);
         })
       );
